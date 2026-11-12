@@ -33,8 +33,13 @@ inside the phone's browser. Nothing runs on a server.
 
 `kosi/look.kos` makes the app's look at build time: the colours are
 Designs' palettes (contrast-checked by Designs), and the orb, the sky and
-the pictures on each page are Designs' generative art, drawn by code. All of
-it uses palette variables, so picking a palette in Settings repaints the app,
+the pictures on each page are Designs' generative art, drawn by code.
+The icons (tabs, microphone, send, each agent) and the spacing and type
+scales come from Designs' **ui kind**, the same design system Designs uses
+for the websites and phone screens it makes. Ask Kosi to "design a phone
+app for …" and Designs lays it out; offline, Kosika lays out a starter
+screen with no model (this needs kosika PR #7 on `studio`). All of it
+uses palette variables, so picking a palette in Settings repaints the app,
 and every drawing Designs makes for you is drawn in the same palette.
 
 ## What works where
