@@ -1,8 +1,9 @@
 name: Pages
 
-# The website is this repo, exactly as it sits: one HTML page, its fonts,
-# media and pictures. Nothing is built, so the workflow only hands the
-# folder to GitHub Pages.
+# The website is this repo, as it sits: one HTML page, its fonts, media and
+# pictures. The one thing built is the phone app in app/: its engine is the
+# Kosika engine from the kosika repo, built to WebAssembly here on every
+# push, so the app always runs the engine on kosika's studio branch.
 
 on:
   push:
@@ -26,6 +27,25 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: blackhole8080-darkmatter/kosika
+          ref: studio
+          path: _build/kosika
+      - uses: actions/checkout@v4
+        with:
+          repository: blackhole8080-darkmatter/kosika-designs
+          path: _build/kosika-designs
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build the phone app
+        run: KOSIKA=_build/kosika DESIGNS=_build/kosika-designs app/build.sh
+      - run: rm -rf _build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

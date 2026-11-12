@@ -1,0 +1,156 @@
+// Kosi on the phone: the one door every question goes through.
+//
+//   kosika test kosi.kos
+//   kosika run kosi.kos --workflow route --input said.json
+//   kosika run kosi.kos --workflow answer --input said.json --model NAME ...
+//
+// where said.json holds {"msg": {"text": "how does the heart pump blood"}}.
+//
+// `route` is plain code, so it works in airplane mode: it reads the words of
+// the question and says who should take it (Kosi, a Designs drawing, the
+// notebook, the router) and whether a picture would help. `answer` asks a
+// model for a few plain sentences. `art` draws a piece of generative art
+// chosen by code from the words, with no model at all.
+
+import "std/designs.kos"
+import "std/designs_generative.kos"
+
+export [Msg, Said, Route, route, answer, art, picture_helps, art_recipe]
+
+record Msg { text: Text }
+record Said { text: Text }
+record KosiBrief { task: Text question: Text }
+// agent: who takes it. kind: how Designs would draw it. picture: whether
+// to draw. offline: whether it can be done with no model at all.
+record Route { agent: Text kind: Text picture: Bool offline: Bool why: Text }
+
+model kosi {
+  input: KosiBrief
+  output: Said
+  parameters: {
+    max_output_tokens: 1200
+  }
+}
+
+fn kosi_task() -> Text {
+  return "You are Kosi, the friendly helper inside Kosika, talking with Aryan on his phone. Answer in plain words: two to five short sentences, the most important idea first, no jargon left unexplained. If a picture would help, a picture is drawn beside your answer, so do not describe a picture. If you are not sure, say so."
+}
+
+fn quiet() -> Said { return {text: ""} }
+
+workflow answer(msg: Msg) -> Said {
+  budget 2 model calls, 180 seconds
+  said = use_model kosi(kosi_task(), msg.text) retry 1 otherwise quiet()
+  out  = {text: said.text.trim()}
+}
+
+// ---------------------------------------------------------------- routing
+
+fn padded(text: Text) -> Text { return " " + text.lower().trim().trim_marks("?!.") + " " }
+
+fn has_any(t: Text, words: Text[]) -> Bool {
+  for w in words {
+    if t.contains(w) { return true }
+  }
+  return false
+}
+
+fn dz_for(text: Text) -> DzAsk { return {text: text, palette: "", place: "chat", kind: ""} }
+
+// The kinds Kosika draws by itself, with no model.
+fn offline_kinds() -> Text[] { return ["chemistry", "units", "element"] }
+
+// A picture helps when the question asks how or why something works, asks
+// to see something, or names a shape a drawing has. Small talk does not.
+fn picture_helps(text: Text) -> Bool {
+  let t = padded(text)
+  if has_any(t, [" draw", " show me", " picture", " diagram", " visual", " illustrat", " animate", " map of", " timeline", " compare", " vs ", " versus ", " mind map", " art ", " wallpaper", " generative"]) { return true }
+  if has_any(t, [" how does ", " how do ", " why does ", " why do ", " why is ", " why are ", " what happens ", " explain ", " what is inside", " structure of", " parts of", " steps "]) { return true }
+  return false
+}
+
+fn route_for(text: Text) -> Route {
+  let t = padded(text)
+  let kind = dz_kind(dz_for(text))
+  if t.starts_with(" remember") or t.starts_with(" note ") or t.starts_with(" note:") or has_any(t, [" what did i ", " do i have ", " my notes", " when is my ", " where did i ", " what do i pay"]) {
+    return {agent: "notebook", kind: "", picture: false, offline: true, why: "you asked me to keep or find a note, so the notebook takes it"}
+  }
+  if has_any(t, [" from ashby", " to cove", " cheapest ", " fewest stops", " the network "]) {
+    return {agent: "router", kind: "", picture: false, offline: true, why: "a journey on the rail network is found by A* search, exactly"}
+  }
+  if offline_kinds().contains(kind) {
+    return {agent: "designs", kind: kind, picture: true, offline: true, why: dz_why(dz_for(text))}
+  }
+  if kind == "quiz" {
+    return {agent: "designs", kind: kind, picture: true, offline: false, why: "you asked to be tested, so Designs makes a quiz"}
+  }
+  if kind == "art" {
+    return {agent: "designs", kind: kind, picture: true, offline: true, why: "you asked for art, so Designs makes a moving piece; with no model, Kosika chooses it from your words"}
+  }
+  let picture = picture_helps(text)
+  let why = if picture { "a picture helps here, so Kosi answers and Designs draws it as " + kind } else { "Kosi answers in words" }
+  return {agent: "kosi", kind: kind, picture: picture, offline: false, why: why}
+}
+
+workflow route(msg: Msg) -> Route {
+  out = route_for(msg.text)
+}
+
+// ---------------------------------------------------------------- art with no model
+
+fn art_recipe(text: Text) -> GenRecipe {
+  let t = padded(text)
+  let piece = if has_any(t, [" sea", " ocean", " water", " wave", " sound", " calm", " rain", " river"]) { "waves" } else if has_any(t, [" tree", " forest", " grow", " nature", " family", " leaf", " plant"]) { "tree" } else if has_any(t, [" space", " planet", " orbit", " atom", " star", " moon", " galaxy", " time"]) { "orbits" } else if has_any(t, [" fire", " wind", " flow", " energy", " thought", " storm", " electric"]) { "flow" } else { "bloom" }
+  let palette = if has_any(t, [" sea", " ocean", " water", " rain", " river"]) { "ocean" } else if has_any(t, [" fire", " energy", " sun", " warm"]) { "ember" } else if has_any(t, [" tree", " forest", " nature", " leaf", " plant"]) { "forest" } else if has_any(t, [" night", " dream", " aurora", " sky"]) { "aurora" } else { "dark_matter" }
+  let mood = if has_any(t, [" lively", " energy", " fast", " storm", " fire", " wild"]) { "lively" } else { "calm" }
+  var seed = 7
+  for c in t.chars() { seed = (seed * 31 + "abcdefghijklmnopqrstuvwxyz".index_of(c).or(13)) % 99991 }
+  let words = text.trim()
+  let title = if words.length() > 40 { words.slice(0, 40) } else { words }
+  return {piece: piece, palette: palette, mood: mood, seed: seed, density: 0.6, title: title}
+}
+
+workflow art(msg: Msg) -> DzResult {
+  made = call gen_render(art_recipe(msg.text))
+  out  = dz_from_art_offline(msg.text, made)
+}
+
+fn dz_from_art_offline(text: Text, g: GenArt) -> DzResult {
+  let none: Text[] = []
+  return {kind: "art", why: "drawn by code from your words, with no model", title: g.recipe.title, page: g.page, svg: g.svg, embed: "", problems: g.problems, fixed: none}
+}
+
+// ---------------------------------------------------------------- tests
+
+test "small talk is answered in words, with no picture" {
+  r = route_for("hi Kosi, how are you today")
+  expect r.agent == "kosi"
+  expect not r.picture
+}
+
+test "a how question gets a picture" {
+  r = route_for("How does the heart pump blood?")
+  expect r.agent == "kosi"
+  expect r.picture
+  expect r.kind == "canvas"
+}
+
+test "chemistry, units and elements are drawn with no model" {
+  expect route_for("balance CH4 + O2 -> CO2 + H2O").offline
+  expect route_for("convert 60 km/h to m/s").kind == "units"
+  expect route_for("tell me about sodium").agent == "designs"
+}
+
+test "notes and journeys go to their agents" {
+  expect route_for("remember: physics exam on 12 December").agent == "notebook"
+  expect route_for("when is my physics exam?").agent == "notebook"
+  expect route_for("from Ashby to Cove").agent == "router"
+}
+
+test "art is chosen from the words, the same every time" {
+  a = art_recipe("a calm piece about the sea")
+  expect a.piece == "waves"
+  expect a.palette == "ocean"
+  expect a.seed == art_recipe("a calm piece about the sea").seed
+  expect gen_problems(a).is_empty()
+}

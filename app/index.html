@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kosika</title>
+<meta name="description" content="Kosika on your phone: Kosi, Designs and the agents, online and offline.">
+<meta name="theme-color" content="#06070d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kosika">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/mark.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icons/mark.svg" alt="" width="30" height="30"><span>Kosika</span></div>
+  <button class="pill" id="status" type="button" aria-label="Who answers, and settings"><i class="dot"></i><span id="status-text">Starting…</span></button>
+</header>
+
+<main>
+  <!-- Kosi: the one door -->
+  <section class="view" id="view-kosi" data-view="kosi">
+    <div class="feed" id="kosi-feed">
+      <div class="hello">
+        <div class="orb" aria-hidden="true"><i></i><i></i><i></i></div>
+        <h1>Ask Kosi anything</h1>
+        <p>Kosi answers, and Kosika Designs draws when a picture helps. Chemistry, units, elements and art are worked out by Kosika itself, so they work in airplane mode too.</p>
+        <div class="tries" id="tries"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Designs: draw anything -->
+  <section class="view" id="view-designs" data-view="designs" hidden>
+    <div class="pad">
+      <h2>Kosika Designs</h2>
+      <p class="soft">Say what to draw. Choose a kind, or let Kosika choose from your words.</p>
+      <form id="design-form" class="card form">
+        <textarea id="design-text" rows="3" placeholder="draw the water cycle" required></textarea>
+        <div class="row">
+          <label>Kind
+            <select id="design-kind">
+              <option value="">Let Kosika choose</option>
+              <option value="canvas">Canvas (diagram + moving picture + quiz)</option>
+              <option value="diagram">Diagram</option>
+              <option value="illustration">Moving picture</option>
+              <option value="art">Art</option>
+              <option value="quiz">Quiz</option>
+              <option value="worked">Worked maths</option>
+              <option value="chemistry">Chemistry (no model)</option>
+              <option value="units">Units (no model)</option>
+              <option value="element">Element (no model)</option>
+            </select>
+          </label>
+          <label>Colours
+            <select id="design-palette">
+              <option value="">Kosika chooses</option>
+              <option value="dark_matter">Dark Matter</option>
+              <option value="aurora">Aurora</option>
+              <option value="ocean">Ocean</option>
+              <option value="ember">Ember</option>
+              <option value="forest">Forest</option>
+              <option value="paper">Paper</option>
+            </select>
+          </label>
+        </div>
+        <button class="go" type="submit">Draw</button>
+      </form>
+      <div class="chips" id="design-tries"></div>
+      <div id="design-out"></div>
+    </div>
+  </section>
+
+  <!-- Agents -->
+  <section class="view" id="view-agents" data-view="agents" hidden>
+    <div class="pad" id="agents-list">
+      <h2>Agents</h2>
+      <p class="soft">Real Kosika agents, running on this phone. What they remember stays on this phone.</p>
+      <div id="agent-cards"></div>
+    </div>
+    <div class="agent-chat" id="agent-chat" hidden>
+      <div class="agent-head"><button class="back" id="agent-back" type="button" aria-label="Back to agents">‹</button><div><b id="agent-name"></b><small id="agent-tag"></small></div></div>
+      <div class="feed" id="agent-feed"></div>
+    </div>
+  </section>
+
+  <!-- Saved -->
+  <section class="view" id="view-saved" data-view="saved" hidden>
+    <div class="pad">
+      <h2>Saved</h2>
+      <p class="soft">Every answer and drawing is kept on this phone, so you can open them with no network.</p>
+      <div id="saved-list"></div>
+    </div>
+  </section>
+
+  <!-- Settings -->
+  <section class="view" id="view-settings" data-view="settings" hidden>
+    <div class="pad">
+      <h2>Settings</h2>
+
+      <div class="card">
+        <h3>Who answers</h3>
+        <div class="seg" role="radiogroup" id="mode">
+          <label><input type="radio" name="mode" value="auto"><span>Auto</span></label>
+          <label><input type="radio" name="mode" value="online"><span>Online only</span></label>
+          <label><input type="radio" name="mode" value="offline"><span>Phone only</span></label>
+        </div>
+        <p class="soft small">Auto uses your free online key when there is a network, and the model on this phone when there is not.</p>
+      </div>
+
+      <div class="card">
+        <h3>Online, free</h3>
+        <label class="field">Groq key <a href="https://console.groq.com/keys" target="_blank" rel="noopener">get one</a>
+          <input id="groq-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="gsk_…"></label>
+        <label class="field">Groq model
+          <input id="groq-model" autocapitalize="off" spellcheck="false"></label>
+        <label class="field">OpenRouter key (used if Groq is busy) <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">get one</a>
+          <input id="or-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-or-…"></label>
+        <label class="field">OpenRouter model (keep <code>:free</code>)
+          <input id="or-model" autocapitalize="off" spellcheck="false"></label>
+        <p class="soft small">Keys stay in this phone's storage and go only to Groq or OpenRouter.</p>
+      </div>
+
+      <div class="card">
+        <h3>Offline, on this phone</h3>
+        <p class="soft small" id="gpu-note"></p>
+        <div id="local-models"></div>
+      </div>
+
+      <div class="card">
+        <h3>Ready for airplane mode?</h3>
+        <ul class="checks" id="ready"></ul>
+        <button class="ghost" id="persist" type="button">Keep Kosika's storage safe</button>
+      </div>
+
+      <div class="card">
+        <h3>Memory</h3>
+        <p class="soft small">Agents' notes and your saved answers live only on this phone.</p>
+        <button class="ghost danger" id="forget" type="button">Forget agents' notes</button>
+        <button class="ghost danger" id="clear-saved" type="button">Delete saved answers</button>
+      </div>
+
+      <div class="card">
+        <h3>Put Kosika on your Home Screen</h3>
+        <ol class="small">
+          <li>Open this page in Safari.</li>
+          <li>Tap the Share button, then <b>Add to Home Screen</b>.</li>
+          <li>Open Kosika from the Home Screen once while online. After that it opens in airplane mode too.</li>
+        </ol>
+        <p class="soft small" id="build"></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<form class="ask" id="ask-form" autocomplete="off">
+  <textarea id="ask-text" rows="1" placeholder="Ask Kosi…" enterkeyhint="send"></textarea>
+  <button type="submit" aria-label="Send">↑</button>
+</form>
+
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="kosi" class="on" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="2"/></svg>Kosi</button>
+  <button data-tab="designs" type="button"><svg viewBox="0 0 24 24"><path d="M4 18c3-8 6-12 8-12s2 6 4 6 3-3 4-5"/></svg>Designs</button>
+  <button data-tab="agents" type="button"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c1-3 3-4 5-4s4 1 5 4M11 19c1-3 3-4 5-4s4 1 5 4"/></svg>Agents</button>
+  <button data-tab="saved" type="button"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Saved</button>
+  <button data-tab="settings" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</button>
+</nav>
+
+<script src="build-id.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
