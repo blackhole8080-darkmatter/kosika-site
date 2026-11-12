@@ -15,10 +15,12 @@ KOSIKA_DESIGNS_MODEL and KOSIKA_DESIGNS_MODEL_URL).
 from __future__ import annotations
 
 import html
+import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+# The kosika repo sits next to kosika-site unless KOSIKA_HOME says otherwise.
+ROOT = Path(os.environ.get("KOSIKA_HOME", Path(__file__).resolve().parents[2] / "kosika"))
 sys.path.insert(0, str(ROOT))
 
 from kosika.designs import DesignsError, design  # noqa: E402
@@ -114,7 +116,7 @@ def main() -> int:
 </body>
 </html>
 """
-    out = ROOT / "site" / "designs.html"
+    out = Path(__file__).resolve().parents[1] / "designs.html"
     out.write_text(page, encoding="utf-8")
     print(f"wrote {out}")
     return 0
