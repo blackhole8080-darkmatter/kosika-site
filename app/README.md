@@ -45,6 +45,7 @@ and every drawing Designs makes for you is drawn in the same palette.
 | Designs: diagrams, canvas, moving pictures, quizzes | yes | yes, simpler | no |
 | Designs: chemistry, units, periodic table | yes | yes | **yes** (Kosika works them out) |
 | Designs: art | yes | yes | **yes** (chosen from your words) |
+| Designs: screens (phone apps, websites, agent windows) | yes | yes | **yes** (a starter laid out from your words) |
 | Notebook, Router agents | yes | yes | **yes** |
 | Study, Explainer, Coach agents | yes | yes | no |
 | Saved answers and drawings | yes | yes | **yes** |

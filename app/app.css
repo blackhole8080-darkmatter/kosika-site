@@ -124,7 +124,8 @@ select, .field input { width: 100%; padding: 9px 10px; border-radius: 10px; bord
 
 /* agents */
 .agent { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; border: 1px solid var(--rule); background: var(--panel); border-radius: 16px; padding: 13px; margin: 10px 0; }
-.agent .ic { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--panel-2); }
+.agent .ai { flex: none; width: 42px; height: 42px; border-radius: var(--ui-r2, 12px); display: grid; place-items: center; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.agent .ai svg { width: 22px; height: 22px; }
 .agent b { display: block; }
 .agent span { color: var(--soft); font-size: 14px; }
 .tag { display: inline-block; margin-top: 5px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
@@ -181,3 +182,10 @@ select, .field input { width: 100%; padding: 9px 10px; border-radius: 10px; bord
 .talk-heard { font-size: 18px; color: var(--soft); min-height: 1.4em; }
 .talk-said { font-size: 20px; max-width: 30em; max-height: 34vh; overflow: auto; white-space: pre-wrap; }
 .talk-go { border: 0; border-radius: 999px; padding: 14px 26px; background: var(--accent); color: var(--on-accent); font-weight: 800; font-size: 17px; }
+
+/* Designs' ui kind: its line icons (ui_icon) and its shape scales (ui_tokens_css). */
+.ic { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.ic .f { fill: currentColor; stroke: none; }
+.ask .send svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.kosi, .card, .agent { border-radius: var(--ui-r3, 16px); }
+.try, .pill { border-radius: var(--ui-pill, 999px); }

@@ -10,12 +10,15 @@
 // the question and says who should take it (Kosi, a Designs drawing, the
 // notebook, the router) and whether a picture would help. `answer` asks a
 // model for a few plain sentences. `art` draws a piece of generative art
-// chosen by code from the words, with no model at all.
+// chosen by code from the words, with no model at all. `screen` designs an
+// interface (a phone app, a website, an agent's window) with Designs' ui
+// kind; with no model, Kosika lays out a starter screen from the words.
 
 import "std/designs.kos"
 import "std/designs_generative.kos"
+import "std/designs_ui.kos"
 
-export [Msg, Said, Route, route, answer, art, picture_helps, art_recipe]
+export [Msg, Said, Route, route, answer, art, screen, picture_helps, art_recipe]
 
 record Msg { text: Text }
 record Said { text: Text }
@@ -84,6 +87,9 @@ fn route_for(text: Text) -> Route {
   if kind == "quiz" {
     return {agent: "designs", kind: kind, picture: true, offline: false, why: "you asked to be tested, so Designs makes a quiz"}
   }
+  if kind == "ui" {
+    return {agent: "designs", kind: kind, picture: true, offline: true, why: "you asked for a screen, so Designs lays it out in its ui style; with no model, Kosika lays out a starter from your words"}
+  }
   if kind == "art" {
     return {agent: "designs", kind: kind, picture: true, offline: true, why: "you asked for art, so Designs makes a moving piece; with no model, Kosika chooses it from your words"}
   }
@@ -113,6 +119,18 @@ fn art_recipe(text: Text) -> GenRecipe {
 workflow art(msg: Msg) -> DzResult {
   made = call gen_render(art_recipe(msg.text))
   out  = dz_from_art_offline(msg.text, made)
+}
+
+// An interface with no model: Designs' starter screen for the words,
+// checked and drawn by the same design system the model's designs use.
+workflow screen(msg: Msg) -> DzResult {
+  out = dz_from_ui_offline(msg.text, ui_result(screen_ask(msg.text), ui_starter(screen_ask(msg.text))))
+}
+
+fn screen_ask(text: Text) -> UiAsk { return {text: text, target: "", theme: "dark", accent: ""} }
+
+fn dz_from_ui_offline(text: Text, r: UiResult) -> DzResult {
+  return {kind: "ui", why: "laid out by Kosika from your words, with no model", title: r.title, page: r.page, svg: "", embed: "", problems: r.problems, fixed: r.fixed}
 }
 
 fn dz_from_art_offline(text: Text, g: GenArt) -> DzResult {
@@ -145,6 +163,18 @@ test "notes and journeys go to their agents" {
   expect route_for("remember: physics exam on 12 December").agent == "notebook"
   expect route_for("when is my physics exam?").agent == "notebook"
   expect route_for("from Ashby to Cove").agent == "router"
+}
+
+test "screens go to Designs' ui kind, and work with no model" {
+  r = route_for("design a phone app for my study timetable")
+  expect r.agent == "designs"
+  expect r.kind == "ui"
+  expect r.offline
+  expect route_for("make a landing page for my coffee shop").kind == "ui"
+  s = ui_result(screen_ask("a phone app for my study timetable"), ui_starter(screen_ask("a phone app for my study timetable")))
+  expect s.target == "phone"
+  expect s.problems.is_empty()
+  expect s.page.contains("<svg")
 }
 
 test "art is chosen from the words, the same every time" {

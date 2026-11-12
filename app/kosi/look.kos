@@ -8,16 +8,27 @@
 // everything, the empty pages) are Designs' generative art, drawn by code.
 // Every colour in them is a palette variable, so choosing another palette
 // in the app repaints all of it, the drawings too.
+//
+// The app's icons and its spacing, radius and type scales come from
+// Designs' ui kind (designs_ui.kos): the same line icons and tokens every
+// website, phone screen and agent window Designs makes is drawn with.
 
 import "std/designs_palette.kos"
 import "std/designs_generative.kos"
+import "std/designs_ui.kos"
 
-export [LookAsk, Look, Swatch, look]
+export [LookAsk, Look, Swatch, Icon, look, app_icons]
 
 record LookAsk { seed: Number }
 record Swatch { name: Text label: Text mood: Text bg: Text gold: Text think: Text accent: Text }
 // css: the palettes and the art's motion. The rest are SVG, drawn by code.
-record Look { css: Text swatches: Swatch[] problems: Text[] orb: Text sky: Text tree: Text bloom: Text waves: Text }
+record Icon { name: Text svg: Text }
+record Look { css: Text swatches: Swatch[] icons: Icon[] problems: Text[] orb: Text sky: Text tree: Text bloom: Text waves: Text }
+
+// The icons the app shows: its tabs, the ask box, and each agent.
+fn app_icons() -> Text[] {
+  return ["spark", "image", "agent", "bookmark", "settings", "mic", "send", "book", "bolt", "file", "pin", "close", "chat", "layers"]
+}
 
 fn piece(name: Text, seed: Number, density: Number, mood: Text, title: Text) -> GenRecipe {
   return {piece: name, palette: "dark_matter", mood: mood, seed: seed, density: density, title: title}
@@ -41,19 +52,27 @@ fn all_problems() -> Text[] {
   return out
 }
 
+fn unknown_icons() -> Text[] {
+  return for n in app_icons() where not ui_icon_names().contains(n) { n }
+}
+
 workflow look(ask: LookAsk) -> Look {
   orb   = gen_svg(piece("orbits", ask.seed, 0.6, "lively", "Kosi"))
   sky   = gen_svg(piece("flow", ask.seed + 1, 0.15, "calm", "The sky behind Kosika"))
   tree  = gen_svg(piece("tree", ask.seed + 2, 0.5, "calm", "Your saved answers grow here"))
   bloom = gen_svg(piece("bloom", ask.seed + 3, 0.55, "calm", "Kosika Designs"))
   waves = gen_svg(piece("waves", ask.seed + 4, 0.5, "calm", "Agents"))
-  out   = {css: palettes_css() + gen_style(), swatches: for p in usable() { swatch(p) }, problems: all_problems(), orb: orb, sky: sky, tree: tree, bloom: bloom, waves: waves}
+  out   = {css: palettes_css() + gen_style() + ui_tokens_css(), swatches: for p in usable() { swatch(p) }, icons: for n in app_icons() { {name: n, svg: ui_icon(n)} }, problems: all_problems(), orb: orb, sky: sky, tree: tree, bloom: bloom, waves: waves}
 }
 
 test "the look's art is drawn in palette colours, so a new palette repaints it" {
   r = piece("orbits", 137, 0.6, "lively", "Kosi")
   expect gen_problems(r).is_empty()
   expect gen_svg(r).contains("var(--")
+}
+
+test "the app's icons are Designs' own line icons, every one known" {
+  expect unknown_icons().is_empty()
 }
 
 test "every palette offered on the phone is readable" {

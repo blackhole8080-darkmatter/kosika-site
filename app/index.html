@@ -197,9 +197,9 @@
 </main>
 
 <form class="ask" id="ask-form" autocomplete="off">
-  <button type="button" class="mic" id="mic" aria-label="Talk to Kosi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <button type="button" class="mic" id="mic" data-icon="mic" aria-label="Talk to Kosi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
   <textarea id="ask-text" rows="1" placeholder="Ask Kosi…" enterkeyhint="send"></textarea>
-  <button type="submit" class="send" aria-label="Send">↑</button>
+  <button type="submit" class="send" aria-label="Send" data-icon="send"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
 </form>
 
 <div class="talk" id="talk" hidden>
@@ -212,11 +212,11 @@
 </div>
 
 <nav class="tabs" aria-label="Sections">
-  <button data-tab="kosi" class="on" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="2"/></svg>Kosi</button>
-  <button data-tab="designs" type="button"><svg viewBox="0 0 24 24"><path d="M4 18c3-8 6-12 8-12s2 6 4 6 3-3 4-5"/></svg>Designs</button>
-  <button data-tab="agents" type="button"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c1-3 3-4 5-4s4 1 5 4M11 19c1-3 3-4 5-4s4 1 5 4"/></svg>Agents</button>
-  <button data-tab="saved" type="button"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Saved</button>
-  <button data-tab="settings" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</button>
+  <button data-tab="kosi" data-icon="spark" class="on" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="2"/></svg>Kosi</button>
+  <button data-tab="designs" data-icon="image" type="button"><svg viewBox="0 0 24 24"><path d="M4 18c3-8 6-12 8-12s2 6 4 6 3-3 4-5"/></svg>Designs</button>
+  <button data-tab="agents" data-icon="agent" type="button"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c1-3 3-4 5-4s4 1 5 4M11 19c1-3 3-4 5-4s4 1 5 4"/></svg>Agents</button>
+  <button data-tab="saved" data-icon="bookmark" type="button"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Saved</button>
+  <button data-tab="settings" data-icon="settings" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>Settings</button>
 </nav>
 
 <script src="build-id.js"></script>

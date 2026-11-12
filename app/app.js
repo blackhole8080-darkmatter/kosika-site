@@ -188,9 +188,11 @@ function showDrawing(c, result) {
 const thinking = () => !!whoAnswers().where.match(/online|phone/);
 
 async function draw(c, text, kind, palette = currentPalette()) {
-  const offlineArt = kind === "art" && !thinking();
-  const done = offlineArt
+  const offline = !thinking();
+  const done = kind === "art" && offline
     ? await narrated(c, "kosi", "art", { msg: { text } }, "Designs draws art by code")
+    : kind === "ui" && offline
+    ? await narrated(c, "kosi", "screen", { msg: { text } }, "Designs lays out the screen by code")
     : await narrated(c, "kosi", "design", { ask: { text, palette, place: "chat", kind } }, `Designs draws ${kind || "it"}`);
   if (done.code === 0 && done.result) showDrawing(c, done.result);
   else needsModelNote(c, done);
@@ -294,6 +296,7 @@ const TRIES = [
   ["convert 60 km/h to m/s", "offline"],
   ["tell me about sodium", "offline"],
   ["a calm generative piece about the sea", "offline"],
+  ["design a phone app for my study timetable", ""],
   ["remember: physics exam on 12 December", "offline"],
   ["when is my physics exam?", "offline"],
   ["compare TCP and UDP", ""],
@@ -304,7 +307,7 @@ for (const [t, tag] of TRIES) {
 
 // ---------------------------------------------------------------- Designs
 
-const DESIGN_TRIES = [["draw the water cycle", ""], ["why does a pendulum swing", "canvas"], ["quiz me on photosynthesis", "quiz"], ["balance Fe + O2 -> Fe2O3", "chemistry"], ["the periodic table", "element"], ["a lively piece about fire", "art"]];
+const DESIGN_TRIES = [["draw the water cycle", ""], ["why does a pendulum swing", "canvas"], ["quiz me on photosynthesis", "quiz"], ["balance Fe + O2 -> Fe2O3", "chemistry"], ["the periodic table", "element"], ["a lively piece about fire", "art"], ["design a phone app for my study timetable", "ui"], ["a landing page for Kosika", "ui"]];
 for (const [t, k] of DESIGN_TRIES) {
   $("#design-tries").append(el("button", { class: "try", type: "button", text: t, onclick: () => { $("#design-text").value = t; $("#design-kind").value = k; $("#design-form").requestSubmit(); } }));
 }
@@ -331,17 +334,17 @@ $("#design-form").addEventListener("submit", async (e) => {
 // ---------------------------------------------------------------- Agents
 
 const AGENTS = [
-  { id: "study", icon: "🎓", name: "Study", about: "Answers in plain words from your notes, and Designs draws the picture. Say “remember: …” to keep a note.", net: true, tries: ["remember: Physics 2 exam on 12 December covers waves and optics", "explain how a transistor works", "what is on my physics exam"] },
-  { id: "explain", icon: "🖼️", name: "Explainer", about: "Answers a question in a few sentences and draws a whole canvas beside it.", net: true, workflow: "explain", input: (t) => ({ q: { text: t } }), tries: ["how does a rainbow form", "why is the sky blue"] },
-  { id: "coach", icon: "🏅", name: "Coach", about: "Quizzes you, keeps what you got wrong, asks it again. Reviews need no model.", net: true, tries: ["quiz physics", "review", "score", "help"] },
-  { id: "notebook", icon: "📓", name: "Notebook", about: "Tell it things, ask later in your own words. No model needed.", net: false, tries: ["remember Rent is 900 euros a month", "what is the rent a month?", "wrong", "right"] },
-  { id: "router", icon: "🚆", name: "Router", about: "The cheapest way across a small rail network, by A* search. No model needed to plan.", net: false, tries: ["from Ashby to Cove", "fewest stops Birch to Elm", "the network"] },
+  { id: "study", icon: "book", name: "Study", about: "Answers in plain words from your notes, and Designs draws the picture. Say “remember: …” to keep a note.", net: true, tries: ["remember: Physics 2 exam on 12 December covers waves and optics", "explain how a transistor works", "what is on my physics exam"] },
+  { id: "explain", icon: "image", name: "Explainer", about: "Answers a question in a few sentences and draws a whole canvas beside it.", net: true, workflow: "explain", input: (t) => ({ q: { text: t } }), tries: ["how does a rainbow form", "why is the sky blue"] },
+  { id: "coach", icon: "bolt", name: "Coach", about: "Quizzes you, keeps what you got wrong, asks it again. Reviews need no model.", net: true, tries: ["quiz physics", "review", "score", "help"] },
+  { id: "notebook", icon: "file", name: "Notebook", about: "Tell it things, ask later in your own words. No model needed.", net: false, tries: ["remember Rent is 900 euros a month", "what is the rent a month?", "wrong", "right"] },
+  { id: "router", icon: "pin", name: "Router", about: "The cheapest way across a small rail network, by A* search. No model needed to plan.", net: false, tries: ["from Ashby to Cove", "fewest stops Birch to Elm", "the network"] },
 ];
 let currentAgent = null;
 
 for (const a of AGENTS) {
   $("#agent-cards").append(el("button", { class: "agent", type: "button", onclick: () => openAgent(a) },
-    el("div", { class: "ic", text: a.icon }),
+    el("div", { class: "ai", "data-icon": a.icon }),
     el("div", {}, el("b", { text: a.name }), el("span", { text: a.about }), el("br"), el("i", { class: "tag" + (a.net ? " net" : ""), text: a.net ? "needs a model" : "works offline" }))));
 }
 
@@ -349,7 +352,7 @@ function openAgent(a) {
   currentAgent = a;
   $("#agents-list").hidden = true;
   $("#agent-chat").hidden = false;
-  $("#agent-name").textContent = a.icon + " " + a.name;
+  $("#agent-name").textContent = a.name;
   $("#agent-tag").textContent = a.net ? "Needs Groq, OpenRouter or the phone's model" : "Works offline, with no model";
   const feed = $("#agent-feed");
   feed.innerHTML = "";
@@ -539,6 +542,20 @@ async function dress() {
     box.append(b);
   }
   setPalette(currentPalette(), look.swatches);
+  dressIcons();
+}
+
+// Designs' line icons in place of the ones the app starts with.
+function dressIcons() {
+  if (!look || !look.icons) return;
+  const icons = Object.fromEntries(look.icons.map((i) => [i.name, i.svg]));
+  for (const n of document.querySelectorAll("[data-icon]")) {
+    const svg = icons[n.dataset.icon];
+    if (!svg || n.dataset.dressed) continue;
+    n.querySelector("svg")?.remove();
+    n.insertAdjacentHTML("afterbegin", svg);
+    n.dataset.dressed = "1";
+  }
 }
 
 // ---------------------------------------------------------------- talking with Kosi
