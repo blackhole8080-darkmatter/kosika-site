@@ -14,12 +14,12 @@ KOSIKA="$(cd "${KOSIKA:-$here/../../kosika}" && pwd)"
 DESIGNS="$(cd "${DESIGNS:-$here/../../kosika-designs}" && pwd)"
 mkdir -p "$here/engine"
 
-echo "1/4  the Kosika engine, as WebAssembly"
+echo "1/5  the Kosika engine, as WebAssembly"
 (cd "$KOSIKA/native" && GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o "$here/engine/kosika.wasm" .)
 cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" "$here/engine/wasm_exec.js" 2>/dev/null ||
   cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" "$here/engine/wasm_exec.js"
 
-echo "2/4  the model that runs on the phone (WebLLM)"
+echo "2/5  the model that runs on the phone (WebLLM)"
 WEBLLM_VERSION=0.2.88
 if [ ! -f "$here/engine/web-llm.js" ] || ! grep -q "$WEBLLM_VERSION" "$here/engine/web-llm.version" 2>/dev/null; then
   tmp="$(mktemp -d)"
@@ -29,7 +29,7 @@ if [ ! -f "$here/engine/web-llm.js" ] || ! grep -q "$WEBLLM_VERSION" "$here/engi
   rm -rf "$tmp"
 fi
 
-echo "3/4  the programs: Kosi, the agents and the Explainer"
+echo "3/5  the programs: Kosi, the agents and the Explainer"
 node - "$here" "$KOSIKA" "$DESIGNS" <<'EOF'
 const fs = require("fs"), path = require("path");
 const [here, kosika, designs] = process.argv.slice(2);
@@ -49,8 +49,16 @@ fs.writeFileSync(path.join(here, "programs.json"), JSON.stringify(programs));
 console.log("     " + Object.keys(programs).join(", "));
 EOF
 
-echo "4/4  the build's name, so phones fetch the new one"
-id="$(cat "$here/engine/kosika.wasm" "$here/programs.json" "$here"/*.js "$here"/*.html "$here"/*.css | sha256sum | cut -c1-12)"
+echo "4/5  the app's look, made by Kosika Designs (look.kos)"
+tmpbin="$(mktemp -d)"
+(cd "$KOSIKA/native" && go build -o "$tmpbin/kosika-native" .)
+echo '{"ask": {"seed": 137}}' > "$tmpbin/in.json"
+"$tmpbin/kosika-native" run "$here/kosi/look.kos" --workflow look --input "$tmpbin/in.json" --json --trace "$tmpbin/trace.jsonl" > "$here/look.json"
+node -e 'const l=require(process.argv[1]); if (l.problems.length) { console.error(l.problems.join("\n")); process.exit(1) } require("fs").writeFileSync(process.argv[2], "/* Made by Kosika Designs (app/kosi/look.kos): its palettes and the motion of its art. */\n" + l.css)' "$here/look.json" "$here/look.css"
+rm -rf "$tmpbin"
+
+echo "5/5  the build's name, so phones fetch the new one"
+id="$(cat "$here/engine/kosika.wasm" "$here/programs.json" "$here/look.json" "$here"/*.js "$here"/*.html "$here"/*.css | sha256sum | cut -c1-12)"
 echo "self.KOSIKA_BUILD = \"$id\";" > "$here/build-id.js"
 ls -la "$here/engine" | sed 's/^/     /'
 echo "built $id"

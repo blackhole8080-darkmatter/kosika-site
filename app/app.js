@@ -3,6 +3,7 @@
 // (kosika.js); this file only shows what they give back.
 
 import { run, warm, whyNot, forgetMemories } from "./kosika.js";
+import { canListen, canSpeak, listen, stopListening, speak, stopSpeaking, voices, voiceSettings } from "./voice.js";
 import { settings, LOCAL_MODELS, hasWebGPU, loadLocal, localDownloaded, forgetLocal, whoAnswers, online } from "./models.js";
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -186,7 +187,7 @@ function showDrawing(c, result) {
 
 const thinking = () => !!whoAnswers().where.match(/online|phone/);
 
-async function draw(c, text, kind, palette = "") {
+async function draw(c, text, kind, palette = currentPalette()) {
   const offlineArt = kind === "art" && !thinking();
   const done = offlineArt
     ? await narrated(c, "kosi", "art", { msg: { text } }, "Designs draws art by code")
@@ -238,6 +239,16 @@ async function askKosi(text) {
   }
   c.done();
   if (saved.text || saved.drawing) store.put(saved);
+  return spokenFor(saved, c);
+}
+
+// What Kosi says out loud: the answer, and a word about the picture.
+function spokenFor(saved, c) {
+  const parts = [];
+  if (saved.text) parts.push(saved.text);
+  if (saved.drawing) parts.push(saved.text ? `I drew it too: ${saved.drawing.title || "have a look"}.` : `Here it is: ${saved.drawing.title || "drawn by Kosika"}. ${saved.route?.why || ""}`);
+  if (!parts.length) parts.push(c.body.innerText.split("\n")[0] || "I could not answer that.");
+  return parts.join(" ");
 }
 
 // ---------------------------------------------------------------- the ask box
@@ -245,6 +256,7 @@ async function askKosi(text) {
 const askForm = $("#ask-form");
 const askText = $("#ask-text");
 let busy = false;
+let spokenNext = false;
 askText.addEventListener("input", () => {
   askText.style.height = "auto";
   askText.style.height = Math.min(askText.scrollHeight, 140) + "px";
@@ -262,14 +274,17 @@ askForm.addEventListener("submit", async (e) => {
   askText.value = "";
   askText.style.height = "auto";
   busy = true;
-  askForm.querySelector("button").disabled = true;
-  document.querySelector(".orb")?.classList.add("busy");
+  $(".send", askForm).disabled = true;
+  const byVoice = spokenNext;
+  spokenNext = false;
   try {
-    if (!$("#view-agents").hidden && currentAgent) await askAgent(currentAgent, text);
-    else await askKosi(text);
+    let said;
+    if (!$("#view-agents").hidden && currentAgent) said = await askAgent(currentAgent, text);
+    else said = await askKosi(text);
+    if (byVoice && voiceSettings.speak && said) speak(said);
   } finally {
     busy = false;
-    askForm.querySelector("button").disabled = false;
+    $(".send", askForm).disabled = false;
   }
 });
 
@@ -303,7 +318,7 @@ $("#design-form").addEventListener("submit", async (e) => {
   out.innerHTML = "";
   const c = card(out, "Kosika Designs");
   const kind = $("#design-kind").value;
-  const result = await draw(c, text, kind, $("#design-palette").value);
+  const result = await draw(c, text, kind, $("#design-palette").value || currentPalette());
   if (result) {
     c.route.hidden = false;
     c.route.textContent = result.why;
@@ -364,6 +379,7 @@ async function askAgent(a, text) {
     store.put({ id: Date.now() + "-" + a.id, at: Date.now(), q: text, agent: a.name, text: c.text.textContent, drawing: r.embed || r.page ? { kind: r.kind, title: r.title, why: r.why, embed: r.embed, page: r.page } : null });
   } else needsModelNote(c, done);
   c.done();
+  return c.text.textContent || c.body.innerText.split("\n")[0];
 }
 
 // ---------------------------------------------------------------- Saved
@@ -486,10 +502,186 @@ $("#clear-saved").addEventListener("click", async () => {
   showSaved();
 });
 
+// ---------------------------------------------------------------- the look, from Kosika Designs
+
+function currentPalette() {
+  return document.documentElement.dataset.palette || "dark_matter";
+}
+
+function setPalette(name, swatches) {
+  document.documentElement.dataset.palette = name;
+  try { localStorage.setItem("kosika.palette", name); } catch (e) {}
+  const s = swatches?.find((x) => x.name === name);
+  if (s) document.querySelector('meta[name="theme-color"]').content = s.bg;
+  for (const b of document.querySelectorAll(".swatch")) b.classList.toggle("on", b.dataset.name === name);
+}
+
+let look = null;
+async function dress() {
+  try {
+    look = await (await fetch("look.json")).json();
+  } catch (e) {
+    return;
+  }
+  $("#sky").innerHTML = look.sky;
+  $("#art-orb") && ($("#art-orb").innerHTML = look.orb);
+  $("#art-bloom").innerHTML = look.bloom;
+  $("#art-waves").innerHTML = look.waves;
+  $("#art-tree").innerHTML = look.tree;
+  $("#talk-art").innerHTML = look.orb;
+  // The small pictures are shown whole, not cropped.
+  for (const id of ["#art-bloom", "#art-waves", "#art-tree"]) $(id + " svg")?.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  const box = $("#palettes");
+  for (const p of look.swatches) {
+    const b = el("button", { class: "swatch", type: "button", "data-name": p.name, title: p.mood, onclick: () => setPalette(p.name, look.swatches) },
+      el("i", {}, ...[p.bg, p.think, p.gold, p.accent].map((c) => { const x = el("b"); x.style.background = c; return x; })),
+      el("span", { text: p.label }));
+    box.append(b);
+  }
+  setPalette(currentPalette(), look.swatches);
+}
+
+// ---------------------------------------------------------------- talking with Kosi
+
+const talk = {
+  box: $("#talk"),
+  on: false,
+  set(state, words = "") {
+    this.box.dataset.state = state;
+    $("#talk-state").textContent = { idle: "Kosi", listening: "Listening…", thinking: "Thinking…", speaking: "Kosi" }[state] || state;
+    $("#talk-go").hidden = state !== "idle";
+    if (words) $("#talk-said").textContent = words;
+  },
+};
+
+function openTalk() {
+  show("kosi");
+  talk.on = true;
+  talk.box.hidden = false;
+  $("#talk-heard").textContent = "";
+  $("#talk-said").textContent = canListen ? "" : "This browser cannot listen here. Close this, tap the text box and use the keyboard's microphone; Kosi still answers out loud.";
+  talk.set("idle");
+}
+
+function closeTalk() {
+  talk.on = false;
+  talk.box.hidden = true;
+  stopListening();
+  stopSpeaking();
+}
+
+function talkTurn() {
+  if (!talk.on) return;
+  if (!canListen) return talk.set("idle");
+  talk.set("listening");
+  $("#talk-heard").textContent = "";
+  listen({
+    onHeard: (t) => { $("#talk-heard").textContent = t; },
+    onError: (err) => {
+      talk.set("idle", err === "not-allowed" || err === "service-not-allowed"
+        ? "Kosika may not use the microphone. Allow it in Settings → Safari → Microphone, or use the keyboard's microphone."
+        : err === "no-speech" ? "I didn't hear anything. Tap to talk." : "Listening stopped (" + err + "). Tap to talk.");
+    },
+    onEnd: async (heard) => {
+      if (!talk.on || !heard) { if (talk.on && talk.box.dataset.state === "listening") talk.set("idle"); return; }
+      talk.set("thinking", "");
+      busy = true;
+      let said = "";
+      try { said = await askKosi(heard); } finally { busy = false; }
+      if (!talk.on) return;
+      talk.set("speaking", said);
+      if (voiceSettings.speak && canSpeak) speak(said, { onEnd: () => talk.on && talkTurn() });
+      else talk.set("idle");
+    },
+  });
+}
+
+$("#mic").addEventListener("click", () => {
+  if (!$("#view-agents").hidden && currentAgent) {
+    // In an agent's chat the mic fills the box, and the answer is read out.
+    if (!canListen) { askText.focus(); return; }
+    $("#mic").classList.add("on");
+    listen({
+      onHeard: (t) => { askText.value = t; },
+      onError: () => $("#mic").classList.remove("on"),
+      onEnd: (heard) => { $("#mic").classList.remove("on"); if (heard) { spokenNext = true; askForm.requestSubmit(); } },
+    });
+    return;
+  }
+  openTalk();
+  talkTurn();
+});
+$("#talk-go").addEventListener("click", () => {
+  stopSpeaking();
+  talkTurn();
+});
+$("#talk-close").addEventListener("click", closeTalk);
+$("#talk-art").addEventListener("click", () => {
+  if (talk.box.dataset.state === "speaking") { stopSpeaking(); talkTurn(); }
+});
+
+// Voice settings.
+function fillVoices() {
+  const pick = $("#voice-pick");
+  const list = voices();
+  pick.innerHTML = "";
+  pick.append(el("option", { value: "", text: "The best one on this phone" }));
+  for (const v of list) pick.append(el("option", { value: v.name, text: `${v.name} (${v.lang})` }));
+  pick.value = voiceSettings.voice;
+}
+if (canSpeak) speechSynthesis.addEventListener?.("voiceschanged", fillVoices);
+$("#speak-answers").addEventListener("change", (e) => { voiceSettings.speak = e.target.checked; });
+$("#voice-pick").addEventListener("change", (e) => { voiceSettings.voice = e.target.value; });
+$("#voice-test").addEventListener("click", () => speak("Hello Aryan, I'm Kosi. Ask me anything, and I'll draw it when a picture helps."));
+
+// Links for Siri, and for carrying settings from the Home Screen app to Safari.
+const here = location.origin + location.pathname;
+$("#copy-talk").addEventListener("click", () => copy(here + "?talk=1", "#copy-talk"));
+$("#copy-setup").addEventListener("click", () => {
+  const setup = { groqKey: settings.groqKey, openrouterKey: settings.openrouterKey, groqModel: settings.groqModel, openrouterModel: settings.openrouterModel, mode: settings.mode, palette: currentPalette() };
+  // After the #, so it never reaches any server: it stays on the phone.
+  copy(here + "#setup=" + btoa(unescape(encodeURIComponent(JSON.stringify(setup)))), "#copy-setup");
+});
+async function copy(text, button) {
+  try { await navigator.clipboard.writeText(text); $(button).textContent = "Copied"; }
+  catch (e) { prompt("Copy this:", text); }
+  setTimeout(() => { $(button).textContent = button === "#copy-talk" ? "Copy" : "Copy my setup"; }, 2000);
+}
+
+function takeSetup() {
+  const m = location.hash.match(/^#setup=(.+)$/);
+  if (!m) return false;
+  try {
+    const s = JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+    for (const k of ["groqKey", "openrouterKey", "groqModel", "openrouterModel", "mode"]) if (typeof s[k] === "string" && s[k]) settings[k] = s[k];
+    if (s.palette) { try { localStorage.setItem("kosika.palette", s.palette); } catch (e) {} document.documentElement.dataset.palette = s.palette; }
+  } catch (e) {}
+  history.replaceState(null, "", location.pathname);
+  return true;
+}
+
 // ---------------------------------------------------------------- start
 
+const tookSetup = takeSetup();
+dress();
 showStatus();
 warm();
+$("#speak-answers").checked = voiceSettings.speak;
+$("#talk-link").textContent = here + "?talk=1";
+fillVoices();
+if (tookSetup) show("settings");
+const params = new URLSearchParams(location.search);
+if (params.has("talk") || params.has("q")) {
+  history.replaceState(null, "", location.pathname);
+  if (params.get("q")) {
+    askText.value = params.get("q");
+    spokenNext = params.has("talk");
+    askForm.requestSubmit();
+  } else {
+    // A phone listens only after a tap, so Siri's link opens Kosi ready.
+    openTalk();
+  }
+}
 if (settings.localModel && hasWebGPU()) {
   // Start the phone's model in the background when it is the one that will answer.
   if (whoAnswers().where === "phone") loadLocal(settings.localModel).catch(() => {});

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-palette="dark_matter">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -13,9 +13,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/mark.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<script>try{var k=localStorage.getItem("kosika.palette");if(k)document.documentElement.dataset.palette=k}catch(e){}</script>
+<link rel="stylesheet" href="look.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
+<div class="sky" id="sky" aria-hidden="true"></div>
 <header class="top">
   <div class="brand"><img src="icons/mark.svg" alt="" width="30" height="30"><span>Kosika</span></div>
   <button class="pill" id="status" type="button" aria-label="Who answers, and settings"><i class="dot"></i><span id="status-text">Starting…</span></button>
@@ -26,7 +29,7 @@
   <section class="view" id="view-kosi" data-view="kosi">
     <div class="feed" id="kosi-feed">
       <div class="hello">
-        <div class="orb" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="art" id="art-orb" aria-hidden="true"></div>
         <h1>Ask Kosi anything</h1>
         <p>Kosi answers, and Kosika Designs draws when a picture helps. Chemistry, units, elements and art are worked out by Kosika itself, so they work in airplane mode too.</p>
         <div class="tries" id="tries"></div>
@@ -37,6 +40,7 @@
   <!-- Designs: draw anything -->
   <section class="view" id="view-designs" data-view="designs" hidden>
     <div class="pad">
+      <div class="art small" id="art-bloom" aria-hidden="true"></div>
       <h2>Kosika Designs</h2>
       <p class="soft">Say what to draw. Choose a kind, or let Kosika choose from your words.</p>
       <form id="design-form" class="card form">
@@ -78,6 +82,7 @@
   <!-- Agents -->
   <section class="view" id="view-agents" data-view="agents" hidden>
     <div class="pad" id="agents-list">
+      <div class="art small" id="art-waves" aria-hidden="true"></div>
       <h2>Agents</h2>
       <p class="soft">Real Kosika agents, running on this phone. What they remember stays on this phone.</p>
       <div id="agent-cards"></div>
@@ -91,6 +96,7 @@
   <!-- Saved -->
   <section class="view" id="view-saved" data-view="saved" hidden>
     <div class="pad">
+      <div class="art small" id="art-tree" aria-hidden="true"></div>
       <h2>Saved</h2>
       <p class="soft">Every answer and drawing is kept on this phone, so you can open them with no network.</p>
       <div id="saved-list"></div>
@@ -101,6 +107,39 @@
   <section class="view" id="view-settings" data-view="settings" hidden>
     <div class="pad">
       <h2>Settings</h2>
+
+      <div class="card">
+        <h3>Colours, from Kosika Designs</h3>
+        <div class="palettes" id="palettes"></div>
+        <p class="soft small">The app and every drawing Designs makes for you use the palette you choose.</p>
+      </div>
+
+      <div class="card">
+        <h3>Voice</h3>
+        <label class="row1"><input type="checkbox" id="speak-answers"> Kosi reads answers aloud</label>
+        <label class="field">Voice <select id="voice-pick"></select></label>
+        <button class="ghost" id="voice-test" type="button">Hear Kosi</button>
+        <p class="soft small" id="voice-note"></p>
+      </div>
+
+      <div class="card" id="siri">
+        <h3>“Hey Siri, Kosi”</h3>
+        <p class="small">Make a Shortcut once, and Siri opens Kosi listening, from anywhere, even the lock screen.</p>
+        <ol class="small">
+          <li>Open the <b>Shortcuts</b> app, tap <b>+</b>.</li>
+          <li>Add the action <b>Open URLs</b>, and paste this link:<br><code id="talk-link"></code> <button class="ghost small" id="copy-talk" type="button">Copy</button></li>
+          <li>Tap the name at the top and call it <b>Kosi</b>. Done: say <b>“Hey Siri, Kosi”</b>.</li>
+        </ol>
+        <p class="soft small">iPhone opens Shortcut links in <b>Safari</b>, not in the Home Screen app, and the two keep separate settings. So set Kosika up in Safari too: tap <b>Copy my setup</b> here, open the copied link in Safari once, and your key and palette are there as well.</p>
+        <button class="ghost" id="copy-setup" type="button">Copy my setup</button>
+        <h3 style="margin-top:14px">A quick answer without opening anything</h3>
+        <p class="small">On an iPhone with Apple Intelligence (15 Pro or newer), a second Shortcut answers out loud with Apple's model on the phone, even offline:</p>
+        <ol class="small">
+          <li>New Shortcut. Add <b>Dictate Text</b>.</li>
+          <li>Add <b>Use Model</b>, choose <b>On-Device</b>, and write: <code>You are Kosi, Aryan's friendly helper. Answer in two or three short spoken sentences: </code> then insert <b>Dictated Text</b>.</li>
+          <li>Add <b>Speak Text</b> with the <b>Response</b>. Name it <b>Ask Kosi</b>.</li>
+        </ol>
+      </div>
 
       <div class="card">
         <h3>Who answers</h3>
@@ -158,9 +197,19 @@
 </main>
 
 <form class="ask" id="ask-form" autocomplete="off">
+  <button type="button" class="mic" id="mic" aria-label="Talk to Kosi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
   <textarea id="ask-text" rows="1" placeholder="Ask Kosi…" enterkeyhint="send"></textarea>
-  <button type="submit" aria-label="Send">↑</button>
+  <button type="submit" class="send" aria-label="Send">↑</button>
 </form>
+
+<div class="talk" id="talk" hidden>
+  <button class="close" id="talk-close" type="button" aria-label="Stop talking">✕</button>
+  <div class="talk-art" id="talk-art" aria-hidden="true"></div>
+  <div class="talk-state" id="talk-state">Listening…</div>
+  <div class="talk-heard" id="talk-heard"></div>
+  <div class="talk-said" id="talk-said"></div>
+  <button class="talk-go" id="talk-go" type="button">Tap to talk</button>
+</div>
 
 <nav class="tabs" aria-label="Sections">
   <button data-tab="kosi" class="on" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="2"/></svg>Kosi</button>

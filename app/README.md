@@ -16,6 +16,27 @@ inside the phone's browser. Nothing runs on a server.
      *Offline, on this phone* (needs iOS 26 for WebGPU).
 4. Settings → *Ready for airplane mode?* should show green ticks.
 
+## Talk to Kosi, and "Hey Siri, Kosi"
+
+- Tap the microphone: Kosi listens, answers out loud with the phone's own
+  voice (works offline), draws when a picture helps, then listens again.
+- Siri: in the Shortcuts app make a Shortcut named **Kosi** with one action,
+  **Open URLs** → `https://blackhole8080-darkmatter.github.io/kosika-site/app/?talk=1`.
+  Say "Hey Siri, Kosi". The link opens in Safari, which keeps its own
+  settings: in the app, Settings → **Copy my setup**, and open that link in
+  Safari once.
+- `?q=your question&talk=1` asks straight away and reads the answer.
+- Settings has the steps for a second Shortcut that answers with Apple's
+  on-device model, without opening anything (Apple Intelligence phones).
+
+## Designed by Kosika Designs
+
+`kosi/look.kos` makes the app's look at build time: the colours are
+Designs' palettes (contrast-checked by Designs), and the orb, the sky and
+the pictures on each page are Designs' generative art, drawn by code. All of
+it uses palette variables, so picking a palette in Settings repaints the app,
+and every drawing Designs makes for you is drawn in the same palette.
+
 ## What works where
 
 | | Online (your free key) | Offline, model on the phone | Offline, no model |
@@ -41,6 +62,8 @@ inside the phone's browser. Nothing runs on a server.
   filesystem in memory; agents' `--memory` folders are kept in IndexedDB.
 - `models.js` — who answers a model call. Keys stay in the phone's storage.
 - `kosika.js`, `app.js`, `index.html`, `app.css` — the app.
+- `voice.js` — listening and speaking.
+- `kosi/look.kos` — the app's look, by Kosika Designs.
 - `sw.js` — saves the app and engine on the phone so it opens offline.
 - `build.sh` — builds `engine/` and `programs.json`; the Pages workflow runs
   it on every push, from kosika's `studio` branch and kosika-designs.
