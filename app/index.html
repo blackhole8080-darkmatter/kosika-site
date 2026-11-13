@@ -27,6 +27,7 @@
 <main>
   <!-- Kosi: the one door -->
   <section class="view" id="view-kosi" data-view="kosi">
+    <button class="ghost small new-talk" id="new-talk" type="button" hidden>New conversation</button>
     <div class="feed" id="kosi-feed">
       <div class="hello">
         <div class="art" id="art-orb" aria-hidden="true"></div>
@@ -177,9 +178,15 @@
       </div>
 
       <div class="card">
+        <h3>What Kosi remembers about you</h3>
+        <p class="soft small">Kosi notices things you tell it about yourself and keeps them on this phone, so it can help you better. Tap ✕ to make it forget one.</p>
+        <ul class="facts" id="facts"></ul>
+      </div>
+
+      <div class="card">
         <h3>Memory</h3>
         <p class="soft small">Agents' notes and your saved answers live only on this phone.</p>
-        <button class="ghost danger" id="forget" type="button">Forget agents' notes</button>
+        <button class="ghost danger" id="forget" type="button">Forget agents' notes and what Kosi remembers</button>
         <button class="ghost danger" id="clear-saved" type="button">Delete saved answers</button>
       </div>
 

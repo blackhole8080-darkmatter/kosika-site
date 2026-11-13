@@ -77,7 +77,7 @@ function show(tab) {
   for (const b of document.querySelectorAll(".tabs button")) b.classList.toggle("on", b.dataset.tab === tab);
   $("#ask-form").hidden = !(tab === "kosi" || (tab === "agents" && !$("#agent-chat").hidden));
   if (tab === "saved") showSaved();
-  if (tab === "settings") showSettings();
+  if (tab === "settings") { showSettings(); showFacts(); }
   scrollTo(0, 0);
 }
 for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => show(b.dataset.tab));
@@ -199,9 +199,26 @@ async function draw(c, text, kind, palette = currentPalette()) {
   return done.code === 0 ? done.result : null;
 }
 
+// The conversation so far, so "and why?" or "draw it" follows on. It lives
+// only until a new conversation is started or the app is closed.
+let talkSoFar = [];
+function heard(q, a) {
+  if (!a) return;
+  talkSoFar.push({ q, a: a.slice(0, 600) });
+  talkSoFar = talkSoFar.slice(-6);
+  $("#new-talk").hidden = false;
+}
+$("#new-talk").addEventListener("click", () => {
+  talkSoFar = [];
+  $("#new-talk").hidden = true;
+  const feed = $("#kosi-feed");
+  for (const n of [...feed.children]) if (!n.classList.contains("hello")) n.remove();
+  $(".hello", feed).hidden = false;
+});
+
 async function askKosi(text) {
   const feed = $("#kosi-feed");
-  $(".hello", feed)?.remove();
+  $(".hello", feed).hidden = true;
   feed.append(el("div", { class: "me", text }));
   const c = card(feed);
   const saved = { id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), at: Date.now(), q: text, agent: "kosi", text: "", drawing: null };
@@ -229,10 +246,13 @@ async function askKosi(text) {
     saved.drawing = await draw(c, text, r.kind);
   } else {
     if (thinking()) {
-      const said = await narrated(c, "kosi", "answer", { msg: { text } }, "Kosi thinks");
-      if (said.code === 0) c.text.textContent = saved.text = said.result.text || "(Kosi had nothing to say.)";
-      else needsModelNote(c, said);
-      if (r.picture && said.code === 0) saved.drawing = await draw(c, text, r.kind);
+      const said = await narrated(c, "kosi", "answer", { talk: { text, earlier: talkSoFar } }, talkSoFar.length ? "Kosi thinks, following the conversation" : "Kosi thinks");
+      if (said.code === 0) {
+        c.text.textContent = saved.text = said.result.text || "(Kosi had nothing to say.)";
+        if (said.result.keep) c.body.append(el("div", { class: "kept", text: "Kosi will remember: " + said.result.keep }));
+      } else needsModelNote(c, said);
+      // A follow-on like "draw it" is drawn as the question it stands for.
+      if (r.picture && said.code === 0) saved.drawing = await draw(c, said.result.about || text, r.kind);
     } else {
       c.note(online()
         ? "Kosi needs a model to answer in words. Add your free Groq key, or download a model to this phone, in Settings."
@@ -241,6 +261,7 @@ async function askKosi(text) {
   }
   c.done();
   if (saved.text || saved.drawing) store.put(saved);
+  heard(text, saved.text || (saved.drawing ? `(drew ${saved.drawing.title || "a picture"})` : ""));
   return spokenFor(saved, c);
 }
 
@@ -488,6 +509,19 @@ async function checkReady() {
     const { usage } = await navigator.storage.estimate();
     line(null, `Kosika uses ${(usage / 1e6).toFixed(0)} MB on this phone`);
   }
+}
+
+// What Kosi remembers about Aryan, read from Kosi's own memory.
+async function showFacts(done) {
+  const box = $("#facts");
+  if (!done) {
+    box.replaceChildren(el("li", { class: "soft", text: "Looking…" }));
+    done = await run("kosi", "known", { msg: { text: "" } });
+  }
+  const facts = done.code === 0 && done.result ? done.result.facts : [];
+  box.replaceChildren(...(facts.length ? facts.map((f) => el("li", {}, el("span", { text: f }),
+    el("button", { class: "x", type: "button", "aria-label": "Forget this", text: "✕", onclick: async () => showFacts(await run("kosi", "forget", { msg: { text: f } })) })))
+    : [el("li", { class: "soft", text: "Nothing yet. Tell Kosi about yourself, like \"I have a physics exam on 12 December\"." })]));
 }
 
 $("#persist").addEventListener("click", async () => {

@@ -16,6 +16,17 @@ inside the phone's browser. Nothing runs on a server.
      *Offline, on this phone* (needs iOS 26 for WebGPU).
 4. Settings → *Ready for airplane mode?* should show green ticks.
 
+## Kosi follows along, and remembers you
+
+- Kosi keeps the last few turns, so "and why?", "what about Mars?" or
+  "draw it" carry on from what you were talking about. **New conversation**
+  starts fresh.
+- When you tell Kosi something about yourself ("I have a physics exam on
+  12 December"), it keeps a short note, on this phone only. Kosika code,
+  not the model, decides what is kept: one short line about you, never a
+  password, key or code. Settings → *What Kosi remembers about you* lists
+  every note, and ✕ forgets one.
+
 ## Talk to Kosi, and "Hey Siri, Kosi"
 
 - Tap the microphone: Kosi listens, answers out loud with the phone's own

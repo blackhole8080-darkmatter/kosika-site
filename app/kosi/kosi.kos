@@ -18,34 +18,126 @@ import "std/designs.kos"
 import "std/designs_generative.kos"
 import "std/designs_ui.kos"
 
-export [Msg, Said, Route, route, answer, art, screen, picture_helps, art_recipe]
+export [Msg, Said, Turn, Talk, KosiSaid, Known, Route, route, answer, known, forget, art, screen, picture_helps, art_recipe, facts_kept]
 
 record Msg { text: Text }
 record Said { text: Text }
-record KosiBrief { task: Text question: Text }
+// One turn of the conversation so far: what Aryan said, what Kosi said.
+record Turn { q: Text a: Text }
+// What Kosi is asked: the words, the turns before them (oldest first).
+record Talk { text: Text earlier: Turn[] }
+// The model writes three things. text: the answer. about: the question
+// written so it makes sense on its own ("and why?" becomes "why is the sky
+// blue?"), for Designs to draw. keep: one short thing worth remembering
+// about Aryan, or nothing.
+record KosiSaid { text: Text about: Text keep: Text }
+record KosiBrief { task: Text question: Text earlier: Text known: Text }
+// What Kosi knows about Aryan: short facts, newest last.
+record Known { facts: Text[] }
 // agent: who takes it. kind: how Designs would draw it. picture: whether
 // to draw. offline: whether it can be done with no model at all.
 record Route { agent: Text kind: Text picture: Bool offline: Bool why: Text }
 
 model kosi {
   input: KosiBrief
-  output: Said
+  output: KosiSaid
   parameters: {
     max_output_tokens: 1200
   }
 }
 
+// Kosi remembers on the phone only, in its own memory folder.
+memory me of Known
+
 fn kosi_task() -> Text {
-  return "You are Kosi, the friendly helper inside Kosika, talking with Aryan on his phone. Answer in plain words: two to five short sentences, the most important idea first, no jargon left unexplained. If a picture would help, a picture is drawn beside your answer, so do not describe a picture. If you are not sure, say so."
+  return "You are Kosi, the friendly helper inside Kosika, talking with Aryan on his phone. KosiSaid in plain words: two to five short sentences, the most important idea first, no jargon left unexplained. If a picture would help, a picture is drawn beside your answer, so do not describe a picture. If you are not sure, say so. 'earlier' is the conversation so far: a short question like 'and why?' or 'what about Mars?' continues it. 'known' is what you remember about Aryan: use it when it helps, never recite it. Fill 'about' with the question written so it makes sense on its own. Fill 'keep' with one short fact about Aryan himself worth remembering for later (his studies, plans, likes, people, dates), in the third person, like 'Aryan has a physics exam on 12 December'; leave it empty when there is nothing new about him. Never keep passwords, keys or codes."
 }
 
-fn quiet() -> Said { return {text: ""} }
+fn quiet() -> KosiSaid { return {text: "", about: "", keep: ""} }
 
-workflow answer(msg: Msg) -> Said {
+// ---------------------------------------------------------------- the conversation
+
+// The last few turns, as plain lines, newest last.
+fn earlier_text(turns: Turn[]) -> Text {
+  let start = (turns.length() - 6).max(0)
+  var out = ""
+  for i in start until turns.length() {
+    out = out + "Aryan: " + cut(turns[i].q, 300) + "\nKosi: " + cut(turns[i].a, 500) + "\n"
+  }
+  return out
+}
+
+fn cut(text: Text, most: Number) -> Text {
+  let t = text.trim()
+  return if t.length() <= most { t } else { t.slice(0, most) + "…" }
+}
+
+fn known_text(k: Known) -> Text {
+  return k.facts.join("\n")
+}
+
+fn no_facts() -> Known { let none: Text[] = [] return {facts: none} }
+
+// ---------------------------------------------------------------- remembering
+
+// Kosika decides what is kept, not the model: one short line, about
+// Aryan, not a secret, not kept already. The newest 40 are kept.
+fn keepable(fact: Text) -> Bool {
+  let t = " " + fact.lower().trim() + " "
+  if fact.trim().length() < 8 or fact.trim().length() > 160 { return false }
+  if not t.contains("aryan") { return false }
+  if has_any(t, ["password", "passcode", " pin ", "api key", " key is", "token", "secret", "sk-", "gsk_", "otp", "card number", "bank"]) { return false }
+  return true
+}
+
+fn facts_kept(k: Known, fact: Text) -> Known {
+  let f = fact.trim().trim_marks(".")
+  if not keepable(f) { return k }
+  for old in k.facts { if old.lower() == f.lower() { return k } }
+  let all = k.facts.concat([f])
+  let start = (all.length() - 40).max(0)
+  return {facts: all.slice(start, all.length())}
+}
+
+fn facts_without(k: Known, fact: Text) -> Known {
+  return {facts: for f in k.facts where f != fact { f }}
+}
+
+fn answered(said: KosiSaid, talk: Talk) -> KosiSaid {
+  let about = if said.about.trim().is_empty() { talk.text } else { said.about.trim() }
+  return {text: said.text.trim(), about: about, keep: if keepable(said.keep) { said.keep.trim() } else { "" }}
+}
+
+workflow answer(talk: Talk) -> KosiSaid {
   budget 2 model calls, 180 seconds
-  said = use_model kosi(kosi_task(), msg.text) retry 1 otherwise quiet()
-  out  = {text: said.text.trim()}
+  mine  = recall me under "me"
+  had   = known_of(mine)
+  said  = use_model kosi(kosi_task(), talk.text, earlier_text(talk.earlier), known_text(had)) retry 1 otherwise quiet()
+  made  = answered(said, talk)
+  now   = facts_kept(had, made.keep)
+  saved = remember now in me under "me"
+  out   = kosi_same(made)
 }
+
+fn kosi_same(a: KosiSaid) -> KosiSaid { return a }
+
+fn known_of(r: MeRecalled) -> Known { return r.value.or(no_facts()) }
+
+// What Kosi remembers about Aryan, for Settings.
+workflow known(msg: Msg) -> Known {
+  mine = recall me under "me"
+  out  = known_of(mine)
+}
+
+// Forget one thing, word for word.
+workflow forget(msg: Msg) -> Known {
+  mine  = recall me under "me"
+  left  = facts_without(known_of(mine), msg.text)
+  saved = remember left in me under "me"
+  out   = kosi_still(left)
+}
+
+fn kosi_still(k: Known) -> Known { return k }
 
 // ---------------------------------------------------------------- routing
 
@@ -175,6 +267,25 @@ test "screens go to Designs' ui kind, and work with no model" {
   expect s.target == "phone"
   expect s.problems.is_empty()
   expect s.page.contains("<svg")
+}
+
+fn talk_of(text: Text, q: Text, a: Text) -> Talk { return {text: text, earlier: [{q: q, a: a}]} }
+fn said_of(text: Text, about: Text, keep: Text) -> KosiSaid { return {text: text, about: about, keep: keep} }
+
+test "Kosi keeps short facts about Aryan, never secrets, never twice" {
+  k = facts_kept(no_facts(), "Aryan has a physics exam on 12 December.")
+  expect k.facts.length() == 1
+  expect facts_kept(k, "aryan has a physics exam on 12 December").facts.length() == 1
+  expect facts_kept(k, "Aryan's Groq api key is gsk_123").facts.length() == 1
+  expect facts_kept(k, "The sky is blue").facts.length() == 1
+  expect facts_without(k, "Aryan has a physics exam on 12 December").facts.is_empty()
+}
+
+test "the conversation so far is the last six turns" {
+  t = talk_of("and why?", "is the sky blue", "Yes.")
+  expect earlier_text(t.earlier).contains("Aryan: is the sky blue")
+  expect answered(said_of(" It scatters. ", "", "Aryan's password is x"), t).about == "and why?"
+  expect answered(said_of(" It scatters. ", "", "Aryan's password is x"), t).keep == ""
 }
 
 test "art is chosen from the words, the same every time" {
