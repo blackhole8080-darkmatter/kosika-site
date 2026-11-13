@@ -191,9 +191,11 @@ async function draw(c, text, kind, palette = currentPalette()) {
   const offline = !thinking();
   const done = kind === "art" && offline
     ? await narrated(c, "kosi", "art", { msg: { text } }, "Designs draws art by code")
-    : kind === "ui" && offline
+    // A new design needs a big model: online, Designs designs it live with
+    // your key; on the phone's small model or offline, Kosika lays it out.
+    : kind === "ui" && !whoAnswers().where.match(/online/)
     ? await narrated(c, "kosi", "screen", { msg: { text } }, "Designs lays out the screen by code")
-    : await narrated(c, "kosi", "design", { ask: { text, palette, place: "chat", kind } }, `Designs draws ${kind || "it"}`);
+    : await narrated(c, "kosi", "design", { ask: { text, palette, place: "chat", kind } }, kind === "ui" ? "Designs designs it live" : `Designs draws ${kind || "it"}`);
   if (done.code === 0 && done.result) showDrawing(c, done.result);
   else needsModelNote(c, done);
   return done.code === 0 ? done.result : null;
