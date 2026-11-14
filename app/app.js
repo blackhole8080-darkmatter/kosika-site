@@ -77,7 +77,7 @@ function show(tab) {
   for (const b of document.querySelectorAll(".tabs button")) b.classList.toggle("on", b.dataset.tab === tab);
   $("#ask-form").hidden = !(tab === "kosi" || (tab === "agents" && !$("#agent-chat").hidden));
   if (tab === "saved") showSaved();
-  if (tab === "settings") showSettings();
+  if (tab === "settings") { showSettings(); showFacts(); }
   scrollTo(0, 0);
 }
 for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => show(b.dataset.tab));
@@ -183,6 +183,75 @@ function showDrawing(c, result) {
   if (result.problems && result.problems.length) c.body.append(el("ul", { class: "problems" }, ...result.problems.slice(0, 4).map((t) => el("li", { text: t }))));
 }
 
+// ---------------------------------------------------------------- designs you can change, like and use
+
+const uiAsk = (text) => ({ text, target: "", theme: "", accent: "" });
+
+// Looks Aryan liked, newest last: new designs lean toward them.
+function likes() {
+  try { return JSON.parse(localStorage.getItem("kosika.likes") || "[]"); } catch (e) { return []; }
+}
+function like(l) {
+  const all = likes().filter((x) => JSON.stringify(x.look) !== JSON.stringify(l.look)).concat([l]).slice(-12);
+  try { localStorage.setItem("kosika.likes", JSON.stringify(all)); } catch (e) {}
+}
+
+// The design last made, so "make it dark" or "add pricing" changes it.
+let lastDesign = null;
+const CHANGE_WORDS = /^(please\s+)?(make|add|remove|drop|change|use|turn|try|put|swap|switch|more|less|give|move|rename|rewrite|show|hide)\b/i;
+
+function designTools(c, text, result) {
+  lastDesign = { text, result };
+  const heart = el("button", { class: "ghost small", type: "button", text: "♡ I like this", onclick: () => {
+    like({ look: result.spec.look, theme: result.spec.theme, ask: text });
+    heart.textContent = "♥ Liked"; heart.disabled = true;
+  } });
+  const app = el("button", { class: "ghost small", type: "button", text: "Open as app", onclick: () => openAsApp(text, result, app) });
+  const change = el("input", { type: "text", placeholder: "Change it: make it light, add pricing, waves…", enterkeyhint: "go" });
+  const form = el("form", { class: "change" }, change, el("button", { class: "go small", type: "submit", text: "Change" }));
+  form.addEventListener("submit", (e) => { e.preventDefault(); if (change.value.trim()) changeDesign(change.value.trim(), { text, result }); change.value = ""; });
+  c.body.append(el("div", { class: "design-tools" }, heart, app), form);
+}
+
+async function changeDesign(change, from = lastDesign) {
+  if (!from) return null;
+  const feed = $("#kosi-feed");
+  feed.append(el("div", { class: "me", text: change }));
+  const c = card(feed, "Kosi · Designs");
+  const done = await narrated(c, "kosi", "ui_edit", { e: { ask: uiAsk(from.text), spec: from.result.spec, change } }, "Designs changes it");
+  if (done.code === 0 && done.result) {
+    c.route.hidden = false;
+    c.route.textContent = (done.result.fixed || []).slice(0, 2).join("; ") || "changed";
+    showDrawing(c, done.result);
+    designTools(c, from.text, done.result);
+    store.put({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), at: Date.now(), q: from.text + " · " + change, agent: "kosi", text: "", drawing: done.result });
+  } else needsModelNote(c, done);
+  c.done();
+  return done.code === 0 ? `Done: ${c.route.textContent}.` : "I could not change it.";
+}
+
+// A design made into a working app: Kosika writes index.html, its
+// manifest, icon and service worker; the app's own cache serves them from
+// this phone, so the app opens offline and keeps what you put in it.
+async function openAsApp(text, result, button) {
+  if (button) { button.disabled = true; button.textContent = "Making the app…"; }
+  const done = await run("kosi", "ui_make_app", { a: { ask: uiAsk(text), spec: result.spec, binds: [] } });
+  if (button) { button.disabled = false; button.textContent = "Open as app"; }
+  if (done.code !== 0 || !done.result) { alert("Kosika could not make the app: " + whyNot(done)); return; }
+  const made = done.result;
+  const base = new URL(`made/${made.slug}/`, location.href);
+  const types = { html: "text/html", webmanifest: "application/manifest+json", js: "text/javascript", svg: "image/svg+xml" };
+  const cache = await caches.open("kosika-made");
+  for (const f of made.files) {
+    const type = types[f.path.split(".").pop()] || "text/plain";
+    await cache.put(new URL(f.path, base).href, new Response(f.text, { headers: { "Content-Type": type + "; charset=utf-8" } }));
+  }
+  await cache.put(base.href, new Response(made.files.find((f) => f.path === "index.html").text, { headers: { "Content-Type": "text/html; charset=utf-8" } }));
+  const frame = el("iframe", { title: made.title, src: base.href });
+  const box = el("div", { class: "full app" }, el("button", { class: "close", type: "button", "aria-label": "Close", text: "✕", onclick: () => box.remove() }), frame);
+  document.body.append(box);
+}
+
 // ---------------------------------------------------------------- Kosi: the one door
 
 const thinking = () => !!whoAnswers().where.match(/online|phone/);
@@ -191,17 +260,51 @@ async function draw(c, text, kind, palette = currentPalette()) {
   const offline = !thinking();
   const done = kind === "art" && offline
     ? await narrated(c, "kosi", "art", { msg: { text } }, "Designs draws art by code")
-    : kind === "ui" && offline
-    ? await narrated(c, "kosi", "screen", { msg: { text } }, "Designs lays out the screen by code")
+    // A new design needs a big model: online, Designs designs it live with
+    // your key, leaning toward looks you liked; on the phone's small model
+    // or offline, Kosika lays it out from your words.
+    : kind === "ui"
+    ? await (whoAnswers().where.match(/online/)
+      ? narrated(c, "kosi", "design_ui_for", { t: { ask: uiAsk(text), likes: likes() } }, "Designs designs it live")
+      : narrated(c, "kosi", "screen", { t: { ask: uiAsk(text), likes: likes() } }, "Designs lays out the screen by code"))
     : await narrated(c, "kosi", "design", { ask: { text, palette, place: "chat", kind } }, `Designs draws ${kind || "it"}`);
-  if (done.code === 0 && done.result) showDrawing(c, done.result);
+  if (done.code === 0 && done.result) {
+    showDrawing(c, done.result);
+    if (kind === "ui" && done.result.spec) designTools(c, text, done.result);
+  }
   else needsModelNote(c, done);
   return done.code === 0 ? done.result : null;
 }
 
-async function askKosi(text) {
+// The conversation so far, so "and why?" or "draw it" follows on. It lives
+// only until a new conversation is started or the app is closed.
+let talkSoFar = [];
+function heard(q, a) {
+  if (!a) return;
+  talkSoFar.push({ q, a: a.slice(0, 600) });
+  talkSoFar = talkSoFar.slice(-6);
+  $("#new-talk").hidden = false;
+}
+$("#new-talk").addEventListener("click", () => {
+  talkSoFar = [];
+  lastDesign = null;
+  $("#new-talk").hidden = true;
   const feed = $("#kosi-feed");
-  $(".hello", feed)?.remove();
+  for (const n of [...feed.children]) if (!n.classList.contains("hello")) n.remove();
+  $(".hello", feed).hidden = false;
+});
+
+async function askKosi(text) {
+  if (lastDesign && CHANGE_WORDS.test(text.trim())) {
+    $(".hello", $("#kosi-feed")).hidden = true;
+    return changeDesign(text.trim());
+  }
+  if (lastDesign && /\b(open|make|turn)\b.*\b(it|this)\b.*\bapp\b/i.test(text)) {
+    await openAsApp(lastDesign.text, lastDesign.result);
+    return "Here it is as an app.";
+  }
+  const feed = $("#kosi-feed");
+  $(".hello", feed).hidden = true;
   feed.append(el("div", { class: "me", text }));
   const c = card(feed);
   const saved = { id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), at: Date.now(), q: text, agent: "kosi", text: "", drawing: null };
@@ -229,10 +332,13 @@ async function askKosi(text) {
     saved.drawing = await draw(c, text, r.kind);
   } else {
     if (thinking()) {
-      const said = await narrated(c, "kosi", "answer", { msg: { text } }, "Kosi thinks");
-      if (said.code === 0) c.text.textContent = saved.text = said.result.text || "(Kosi had nothing to say.)";
-      else needsModelNote(c, said);
-      if (r.picture && said.code === 0) saved.drawing = await draw(c, text, r.kind);
+      const said = await narrated(c, "kosi", "answer", { talk: { text, earlier: talkSoFar } }, talkSoFar.length ? "Kosi thinks, following the conversation" : "Kosi thinks");
+      if (said.code === 0) {
+        c.text.textContent = saved.text = said.result.text || "(Kosi had nothing to say.)";
+        if (said.result.keep) c.body.append(el("div", { class: "kept", text: "Kosi will remember: " + said.result.keep }));
+      } else needsModelNote(c, said);
+      // A follow-on like "draw it" is drawn as the question it stands for.
+      if (r.picture && said.code === 0) saved.drawing = await draw(c, said.result.about || text, r.kind);
     } else {
       c.note(online()
         ? "Kosi needs a model to answer in words. Add your free Groq key, or download a model to this phone, in Settings."
@@ -241,6 +347,7 @@ async function askKosi(text) {
   }
   c.done();
   if (saved.text || saved.drawing) store.put(saved);
+  heard(text, saved.text || (saved.drawing ? `(drew ${saved.drawing.title || "a picture"})` : ""));
   return spokenFor(saved, c);
 }
 
@@ -488,6 +595,19 @@ async function checkReady() {
     const { usage } = await navigator.storage.estimate();
     line(null, `Kosika uses ${(usage / 1e6).toFixed(0)} MB on this phone`);
   }
+}
+
+// What Kosi remembers about Aryan, read from Kosi's own memory.
+async function showFacts(done) {
+  const box = $("#facts");
+  if (!done) {
+    box.replaceChildren(el("li", { class: "soft", text: "Looking…" }));
+    done = await run("kosi", "known", { msg: { text: "" } });
+  }
+  const facts = done.code === 0 && done.result ? done.result.facts : [];
+  box.replaceChildren(...(facts.length ? facts.map((f) => el("li", {}, el("span", { text: f }),
+    el("button", { class: "x", type: "button", "aria-label": "Forget this", text: "✕", onclick: async () => showFacts(await run("kosi", "forget", { msg: { text: f } })) })))
+    : [el("li", { class: "soft", text: "Nothing yet. Tell Kosi about yourself, like \"I have a physics exam on 12 December\"." })]));
 }
 
 $("#persist").addEventListener("click", async () => {

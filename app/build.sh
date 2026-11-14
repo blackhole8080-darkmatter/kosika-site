@@ -36,7 +36,7 @@ const [here, kosika, designs] = process.argv.slice(2);
 const kos = (dir) => Object.fromEntries(fs.readdirSync(dir).filter((f) => f.endsWith(".kos")).map((f) => [f, fs.readFileSync(path.join(dir, f), "utf8")]));
 const agents = path.join(kosika, "examples/agents");
 const programs = {
-  kosi: { main: "kosi.kos", files: kos(path.join(here, "kosi")) },
+  kosi: { main: "kosi.kos", files: kos(path.join(here, "kosi")), memory: true },
   explain: { main: "explain.kos", files: { "explain.kos": fs.readFileSync(path.join(designs, "explain.kos"), "utf8") } },
 };
 for (const name of ["study", "coach", "notebook", "router"]) {
