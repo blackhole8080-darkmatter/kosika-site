@@ -27,6 +27,22 @@ inside the phone's browser. Nothing runs on a server.
   password, key or code. Settings → *What Kosi remembers about you* lists
   every note, and ✕ forgets one.
 
+## Designs you change, like and use
+
+Ask Kosi for a phone app, a website or an agent's window and Designs
+designs it: live with your key (a new look each time), or laid out by
+Kosika offline. Then:
+
+- **Change it** by saying or typing "make it light", "add pricing",
+  "waves" or "rewrite the headline". Short changes are made by Kosika with
+  no model (so they work offline); rewrites go to the model.
+- **♡ I like this** keeps the look on the phone; new designs lean toward
+  the looks you liked.
+- **Open as app** makes it a working app (tabs switch, lists take items,
+  what you add is kept), served from this phone, so it works offline.
+
+(Needs kosika PR #8 on `studio`.)
+
 ## Talk to Kosi, and "Hey Siri, Kosi"
 
 - Tap the microphone: Kosi listens, answers out loud with the phone's own

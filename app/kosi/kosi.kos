@@ -214,16 +214,24 @@ workflow art(msg: Msg) -> DzResult {
 }
 
 // An interface with no model: Designs' starter screen for the words,
-// checked and drawn by the same design system the model's designs use.
-workflow screen(msg: Msg) -> DzResult {
-  out = dz_from_ui_offline(msg.text, ui_result(screen_ask(msg.text), ui_starter(screen_ask(msg.text))))
+// leaning toward the looks Aryan liked, checked and drawn by the same
+// design system the model's designs use. Online, the app calls Designs'
+// design_ui_for instead, and ui_edit and ui_make_app for changes and apps.
+workflow screen(t: UiTasteAsk) -> UiResult {
+  out = screen_offline(t)
 }
 
-fn screen_ask(text: Text) -> UiAsk { return {text: text, target: "", theme: "dark", accent: ""} }
-
-fn dz_from_ui_offline(text: Text, r: UiResult) -> DzResult {
-  return {kind: "ui", why: "laid out by Kosika from your words, with no model", title: r.title, page: r.page, svg: "", embed: "", problems: r.problems, fixed: r.fixed}
+fn screen_offline(t: UiTasteAsk) -> UiResult {
+  let s = ui_starter(t.ask)
+  let leaned: UiSpec = {target: s.target, title: s.title, brand: s.brand, accent: s.accent, theme: s.theme, look: ui_lean(s.look, t.likes), screens: s.screens}
+  return ui_result(t.ask, leaned)
 }
+
+fn no_likes() -> UiLike[] { let none: UiLike[] = [] return none }
+fn taste_of(text: Text, likes: UiLike[]) -> UiTasteAsk { return {ask: screen_ask(text), likes: likes} }
+fn liked_look() -> UiLike { return {look: {colours: ["#16a34a"], shape: "round", art: "waves", font: "rounded"}, theme: "light", ask: "a running app"} }
+
+fn screen_ask(text: Text) -> UiAsk { return {text: text, target: "", theme: "", accent: ""} }
 
 fn dz_from_art_offline(text: Text, g: GenArt) -> DzResult {
   let none: Text[] = []
@@ -263,7 +271,7 @@ test "screens go to Designs' ui kind, and work with no model" {
   expect r.kind == "ui"
   expect r.offline
   expect route_for("make a landing page for my coffee shop").kind == "ui"
-  s = ui_result(screen_ask("a phone app for my study timetable"), ui_starter(screen_ask("a phone app for my study timetable")))
+  s = screen_offline(taste_of("a phone app for my study timetable", no_likes()))
   expect s.target == "phone"
   expect s.problems.is_empty()
   expect s.page.contains("<svg")
@@ -286,6 +294,12 @@ test "the conversation so far is the last six turns" {
   expect earlier_text(t.earlier).contains("Aryan: is the sky blue")
   expect answered(said_of(" It scatters. ", "", "Aryan's password is x"), t).about == "and why?"
   expect answered(said_of(" It scatters. ", "", "Aryan's password is x"), t).keep == ""
+}
+
+test "offline screens lean toward the looks Aryan liked" {
+  s = screen_offline(taste_of("a phone app for my study timetable", [liked_look()]))
+  expect s.problems.is_empty()
+  expect s.spec.look.art != ""
 }
 
 test "art is chosen from the words, the same every time" {

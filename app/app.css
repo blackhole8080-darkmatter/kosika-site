@@ -197,3 +197,12 @@ select, .field input { width: 100%; padding: 9px 10px; border-radius: 10px; bord
 .facts li { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--rule); font-size: 14px; }
 .facts li:first-child { border-top: 0; }
 .facts .x { flex: none; border: 0; background: var(--panel-2); width: 30px; height: 30px; border-radius: 50%; color: var(--soft); }
+
+/* Designs you can change, like and open as apps. */
+.design-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.design-tools .ghost { margin: 0; }
+.change { display: flex; gap: 8px; margin-top: 8px; }
+.change input { flex: 1; min-width: 0; padding: 9px 12px; border-radius: var(--ui-pill, 999px); border: 1px solid var(--rule); background: var(--panel-2); font-size: 16px; }
+.go.small { width: auto; padding: 9px 16px; font-size: 14px; border-radius: var(--ui-pill, 999px); }
+.full.app iframe { background: #fff; }
+.full.app .close { left: 10px; right: auto; }
