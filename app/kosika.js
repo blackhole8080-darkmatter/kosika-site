@@ -23,7 +23,8 @@ worker.onmessage = async (e) => {
   if (m.type === "model") {
     run?.onEvent({ type: "model", ask: m.ask });
     const t0 = performance.now();
-    const answer = await complete(m.body, (who) => run?.onEvent({ type: "who", ask: m.ask, who }));
+    const onText = run?.stream ? (text) => run.onEvent({ type: "text", ask: m.ask, text }) : null;
+    const answer = await complete(m.body, (who) => run?.onEvent({ type: "who", ask: m.ask, who }), onText);
     run?.onEvent({ type: "answered", ask: m.ask, status: answer.status, ms: Math.round(performance.now() - t0) });
     worker.postMessage({ type: "answer", ask: m.ask, status: answer.status, body: answer.body });
     return;
@@ -51,13 +52,13 @@ export async function loadPrograms() {
 }
 
 // run("kosi", "route", {msg: {text}}) → {code, result, stderr, trace, ms}
-export async function run(program, workflow, input, { onEvent = () => {}, memory = false, maxOutput } = {}) {
+export async function run(program, workflow, input, { onEvent = () => {}, memory = false, maxOutput, stream = false } = {}) {
   const all = await loadPrograms();
   const p = all[program];
   if (!p) throw new Error("No such program: " + program);
   const id = nextId++;
   return new Promise((resolve) => {
-    runs.set(id, { resolve, onEvent });
+    runs.set(id, { resolve, onEvent, stream });
     worker.postMessage({ type: "run", id, job: { program, main: p.main, files: p.files, workflow, input, memory: memory || !!p.memory, models: p.models, maxOutput } });
   });
 }
