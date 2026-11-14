@@ -3,7 +3,7 @@
 // (kosika.js); this file only shows what they give back.
 
 import { run, warm, whyNot, forgetMemories } from "./kosika.js";
-import { canListen, canSpeak, listen, stopListening, speak, stopSpeaking, voices, voiceSettings } from "./voice.js";
+import { canListen, canSpeak, listen, stopListening, speak, speakMore, stopSpeaking, voices, voiceSettings } from "./voice.js";
 import { settings, LOCAL_MODELS, hasWebGPU, loadLocal, localDownloaded, forgetLocal, whoAnswers, online } from "./models.js";
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -150,13 +150,16 @@ function card(feed, label = "Kosi") {
 }
 
 // Run a program, narrating it on the card.
-async function narrated(c, program, workflow, input, what) {
+// With onText, the model's words so far are passed on as they are written.
+async function narrated(c, program, workflow, input, what, { onText = null } = {}) {
   const li = c.step(what);
   const t0 = performance.now();
   let calls = 0;
   const done = await run(program, workflow, input, {
+    stream: !!onText,
     onEvent: (e) => {
       if (e.type === "who") { calls++; li.textContent = `${what} · asking ${e.who === "phone" ? "the model on this phone" : e.who} (call ${calls})`; }
+      if (e.type === "text" && onText) onText(e.text);
     },
   });
   const secs = ((performance.now() - t0) / 1000).toFixed(1);
@@ -294,7 +297,44 @@ $("#new-talk").addEventListener("click", () => {
   $(".hello", feed).hidden = false;
 });
 
-async function askKosi(text) {
+// The "text" of Kosi's answer while the model is still writing its JSON:
+// {"text": "Photosynthesis is how plants…  →  Photosynthesis is how plants…
+function partialText(json) {
+  const m = /"text"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(json);
+  if (!m) return "";
+  let s = m[1].replace(/\\u[0-9a-fA-F]{0,3}$/, "");
+  try { return JSON.parse('"' + s + '"'); } catch (e) { return ""; }
+}
+
+// Speaks an answer while it is still being written, one finished sentence
+// at a time; finish(all) says the rest, then calls onEnd.
+function liveVoice() {
+  let said = 0, heard = "", broken = false;
+  return {
+    get started() { return said > 0; },
+    feed(text) {
+      if (broken) return;
+      if (!text.startsWith(heard.slice(0, said))) { broken = true; return; }
+      heard = text;
+      const rest = text.slice(said);
+      // Up to the last finished sentence, once there is enough to say.
+      let upTo = 0;
+      for (const m of rest.matchAll(/[.!?](?=\s)/g)) upTo = m.index + 1;
+      if (upTo < 12) return;
+      const chunk = rest.slice(0, upTo);
+      // The first sentence cuts off anything still being said from before.
+      if (said) speakMore(chunk); else speak(chunk);
+      said += chunk.length;
+    },
+    finish(all, onEnd = () => {}) {
+      if (!said) return speak(all, { onEnd });
+      const spoken = heard.slice(0, said);
+      speakMore(all.startsWith(spoken) ? all.slice(said) : "", { onEnd });
+    },
+  };
+}
+
+async function askKosi(text, { voice = null } = {}) {
   if (lastDesign && CHANGE_WORDS.test(text.trim())) {
     $(".hello", $("#kosi-feed")).hidden = true;
     return changeDesign(text.trim());
@@ -332,7 +372,17 @@ async function askKosi(text) {
     saved.drawing = await draw(c, text, r.kind);
   } else {
     if (thinking()) {
-      const said = await narrated(c, "kosi", "answer", { talk: { text, earlier: talkSoFar } }, talkSoFar.length ? "Kosi thinks, following the conversation" : "Kosi thinks");
+      // The answer appears word by word as the model writes it.
+      c.text.classList.add("live");
+      const said = await narrated(c, "kosi", "answer", { talk: { text, earlier: talkSoFar } }, talkSoFar.length ? "Kosi thinks, following the conversation" : "Kosi thinks", {
+        onText: (json) => {
+          const words = partialText(json);
+          if (!words) return;
+          c.text.textContent = words;
+          if (voice) voice.feed(words);
+        },
+      });
+      c.text.classList.remove("live");
       if (said.code === 0) {
         c.text.textContent = saved.text = said.result.text || "(Kosi had nothing to say.)";
         if (said.result.keep) c.body.append(el("div", { class: "kept", text: "Kosi will remember: " + said.result.keep }));
@@ -388,9 +438,10 @@ askForm.addEventListener("submit", async (e) => {
   spokenNext = false;
   try {
     let said;
+    const voice = byVoice && voiceSettings.speak && canSpeak ? liveVoice() : null;
     if (!$("#view-agents").hidden && currentAgent) said = await askAgent(currentAgent, text);
-    else said = await askKosi(text);
-    if (byVoice && voiceSettings.speak && said) speak(said);
+    else said = await askKosi(text, { voice });
+    if (voice && said) voice.finish(said);
   } finally {
     busy = false;
     $(".send", askForm).disabled = false;
@@ -724,10 +775,12 @@ function talkTurn() {
       talk.set("thinking", "");
       busy = true;
       let said = "";
-      try { said = await askKosi(heard); } finally { busy = false; }
-      if (!talk.on) return;
+      // Kosi starts speaking as soon as the first sentence is written.
+      const voice = voiceSettings.speak && canSpeak ? liveVoice() : null;
+      try { said = await askKosi(heard, { voice }); } finally { busy = false; }
+      if (!talk.on) { stopSpeaking(); return; }
       talk.set("speaking", said);
-      if (voiceSettings.speak && canSpeak) speak(said, { onEnd: () => talk.on && talkTurn() });
+      if (voice) voice.finish(said, () => talk.on && talkTurn());
       else talk.set("idle");
     },
   });

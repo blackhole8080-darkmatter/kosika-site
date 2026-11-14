@@ -43,6 +43,16 @@ Kosika offline. Then:
 
 (Needs kosika PR #8 on `studio`.)
 
+## Answers that arrive as they are written
+
+Kosi's answers appear word by word while the model writes them, from Groq,
+OpenRouter or the model on the phone. When you talk to Kosi, it starts
+speaking as soon as the first sentence is finished, and says the rest as it
+comes, so a long answer no longer means a long silence. Kosika's engine
+still gets the whole answer at the end and checks its shape as before. If a
+service will not stream a JSON answer, the phone asks it again without JSON
+mode and remembers that for the rest of the session.
+
 ## Talk to Kosi, and "Hey Siri, Kosi"
 
 - Tap the microphone: Kosi listens, answers out loud with the phone's own
