@@ -2,16 +2,21 @@
 # Build Kosika for phones: the engine, the programs it runs, and the
 # on-phone model library, all into app/engine/ and app/programs.json.
 #
-#   KOSIKA=../kosika DESIGNS=../kosika-designs app/build.sh
+#   KOSIKA=../kosika DESIGNS=../kosika-designs AGENTS=../kosika-agents/agents app/build.sh
 #
-# KOSIKA and DESIGNS are checkouts of the kosika and kosika-designs repos
-# (by default, next to this repo). Needs Go and npm. The website's Pages
+# KOSIKA, DESIGNS and AGENTS are checkouts of the kosika, kosika-designs and
+# kosika-agents repos (by default, next to this repo). Until the agents have
+# left kosika, AGENTS falls back to kosika's own examples/agents.
+# Needs Go and npm. The website's Pages
 # workflow runs this on every push, so nothing built is kept in git.
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
 KOSIKA="$(cd "${KOSIKA:-$here/../../kosika}" && pwd)"
 DESIGNS="$(cd "${DESIGNS:-$here/../../kosika-designs}" && pwd)"
+AGENTS="${AGENTS:-$here/../../kosika-agents/agents}"
+[ -d "$AGENTS" ] || AGENTS="$KOSIKA/examples/agents"
+AGENTS="$(cd "$AGENTS" && pwd)"
 mkdir -p "$here/engine"
 
 echo "1/5  the Kosika engine, as WebAssembly"
@@ -30,11 +35,10 @@ if [ ! -f "$here/engine/web-llm.js" ] || ! grep -q "$WEBLLM_VERSION" "$here/engi
 fi
 
 echo "3/5  the programs: Kosi, the agents and the Explainer"
-node - "$here" "$KOSIKA" "$DESIGNS" <<'EOF'
+node - "$here" "$AGENTS" "$DESIGNS" <<'EOF'
 const fs = require("fs"), path = require("path");
-const [here, kosika, designs] = process.argv.slice(2);
+const [here, agents, designs] = process.argv.slice(2);
 const kos = (dir) => Object.fromEntries(fs.readdirSync(dir).filter((f) => f.endsWith(".kos")).map((f) => [f, fs.readFileSync(path.join(dir, f), "utf8")]));
-const agents = path.join(kosika, "examples/agents");
 const programs = {
   kosi: { main: "kosi.kos", files: kos(path.join(here, "kosi")), memory: true },
   explain: { main: "explain.kos", files: { "explain.kos": fs.readFileSync(path.join(designs, "explain.kos"), "utf8") } },
