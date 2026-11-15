@@ -112,25 +112,87 @@ function errorBody(status, message) {
   return { status, body: JSON.stringify({ error: { message } }) };
 }
 
-async function viaHTTP(url, key, model, request, extraHeaders = {}) {
+// Services that refused a streamed JSON-mode answer this session: their
+// JSON-mode calls are streamed without JSON mode from then on.
+const noStreamJSON = new Set();
+
+async function viaHTTP(url, key, model, request, extraHeaders = {}, onText = null) {
+  const headers = { "content-type": "application/json", authorization: "Bearer " + key, ...extraHeaders };
   const body = { ...request, model };
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: "Bearer " + key, ...extraHeaders },
-    body: JSON.stringify(body),
-  });
+  // Words can be shown as they come only for plain answers, not tool calls.
+  if (onText && !body.tools) {
+    if (noStreamJSON.has(url)) delete body.response_format;
+    let answer = await streamed(url, headers, body, onText);
+    if (answer.status === 400 && body.response_format && /json|stream/i.test(answer.body)) {
+      noStreamJSON.add(url);
+      delete body.response_format;
+      answer = await streamed(url, headers, body, onText);
+    }
+    return answer;
+  }
+  const r = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
   const text = await r.text();
   // A JSON-mode answer the service could not make is asked again without
   // JSON mode: the program checks the answer's shape itself.
   if (r.status === 400 && body.response_format && /json/i.test(text)) {
     delete body.response_format;
-    const again = await fetch(url, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + key, ...extraHeaders }, body: JSON.stringify(body) });
+    const again = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
     return { status: again.status, body: await again.text() };
   }
   return { status: r.status, body: text };
 }
 
-async function viaPhone(request) {
+// One streamed call: onText(all words so far) as they arrive, then the
+// answer shaped as if it had not been streamed, so the engine sees no change.
+async function streamed(url, headers, body, onText) {
+  const r = await fetch(url, { method: "POST", headers, body: JSON.stringify({ ...body, stream: true }) });
+  if (!r.ok || !r.body || !/event-stream/i.test(r.headers.get("content-type") || "")) {
+    return { status: r.status, body: await r.text() };
+  }
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", text = "", finish = "stop", id = "", usage = null, failed = null;
+  const take = (line) => {
+    line = line.trim();
+    if (!line.startsWith("data:")) return;
+    const data = line.slice(5).trim();
+    if (!data || data === "[DONE]") return;
+    let chunk;
+    try { chunk = JSON.parse(data); } catch (e) { return; }
+    if (chunk.error) { failed = chunk.error; return; }
+    id = chunk.id || id;
+    usage = chunk.usage || chunk.x_groq?.usage || usage;
+    const ch = chunk.choices && chunk.choices[0];
+    if (!ch) return;
+    if (ch.finish_reason) finish = ch.finish_reason;
+    const piece = ch.delta && ch.delta.content;
+    if (piece) {
+      text += piece;
+      try { onText(text); } catch (e) {}
+    }
+  };
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let nl;
+    while ((nl = buf.indexOf("\n")) >= 0) {
+      take(buf.slice(0, nl));
+      buf = buf.slice(nl + 1);
+    }
+  }
+  take(buf);
+  if (failed) return { status: 400, body: JSON.stringify({ error: failed }) };
+  return { status: 200, body: JSON.stringify(finished(id, body.model, text, finish, usage)) };
+}
+
+function finished(id, model, text, finish, usage) {
+  const out = { id: id || "kosika-stream", object: "chat.completion", model, choices: [{ index: 0, message: { role: "assistant", content: text }, finish_reason: finish }] };
+  if (usage) out.usage = usage;
+  return out;
+}
+
+async function viaPhone(request, onText = null) {
   const id = settings.localModel;
   const e = await loadLocal(id);
   const asked = {
@@ -139,13 +201,27 @@ async function viaPhone(request) {
     temperature: request.temperature ?? 0.4,
   };
   if (request.response_format) asked.response_format = { type: "json_object" };
-  const answer = await e.chat.completions.create(asked);
-  return { status: 200, body: JSON.stringify(answer) };
+  if (!onText) {
+    const answer = await e.chat.completions.create(asked);
+    return { status: 200, body: JSON.stringify(answer) };
+  }
+  let text = "", finish = "stop";
+  for await (const chunk of await e.chat.completions.create({ ...asked, stream: true })) {
+    const ch = chunk.choices && chunk.choices[0];
+    if (!ch) continue;
+    if (ch.finish_reason) finish = ch.finish_reason;
+    if (ch.delta && ch.delta.content) {
+      text += ch.delta.content;
+      try { onText(text); } catch (err) {}
+    }
+  }
+  return { status: 200, body: JSON.stringify(finished("", id, text, finish, null)) };
 }
 
 // Answer one model call from the engine. `body` is the OpenAI-style request
-// the engine wrote, word for word as it sends it on the laptop.
-export async function complete(body, onWho = () => {}) {
+// the engine wrote, word for word as it sends it on the laptop. With onText,
+// the answer is streamed and onText(words so far) is called as it grows.
+export async function complete(body, onWho = () => {}, onText = null) {
   let request;
   try {
     request = JSON.parse(body);
@@ -155,9 +231,9 @@ export async function complete(body, onWho = () => {}) {
   const mode = settings.mode;
   const net = online();
   const tries = [];
-  if (mode !== "offline" && net && settings.groqKey) tries.push(["Groq", () => viaHTTP("https://api.groq.com/openai/v1/chat/completions", settings.groqKey, settings.groqModel, request)]);
-  if (mode !== "offline" && net && settings.openrouterKey) tries.push(["OpenRouter", () => viaHTTP("https://openrouter.ai/api/v1/chat/completions", settings.openrouterKey, settings.openrouterModel, request, { "X-Title": "Kosika" })]);
-  if (mode !== "online" && settings.localModel && hasWebGPU()) tries.push(["phone", () => viaPhone(request)]);
+  if (mode !== "offline" && net && settings.groqKey) tries.push(["Groq", () => viaHTTP("https://api.groq.com/openai/v1/chat/completions", settings.groqKey, settings.groqModel, request, {}, onText)]);
+  if (mode !== "offline" && net && settings.openrouterKey) tries.push(["OpenRouter", () => viaHTTP("https://openrouter.ai/api/v1/chat/completions", settings.openrouterKey, settings.openrouterModel, request, { "X-Title": "Kosika" }, onText)]);
+  if (mode !== "online" && settings.localModel && hasWebGPU()) tries.push(["phone", () => viaPhone(request, onText)]);
   if (!tries.length) {
     if (!net || mode === "offline") return errorBody(400, "Kosika is offline and no model is on this phone yet. Drawings Kosika makes by code still work. To think offline, download a model in Settings while you have a network.");
     return errorBody(400, "No model to ask yet. Add your free Groq or OpenRouter key in Settings, or download a model to this phone.");

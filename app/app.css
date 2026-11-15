@@ -206,3 +206,6 @@ select, .field input { width: 100%; padding: 9px 10px; border-radius: 10px; bord
 .go.small { width: auto; padding: 9px 16px; font-size: 14px; border-radius: var(--ui-pill, 999px); }
 .full.app iframe { background: #fff; }
 .full.app .close { left: 10px; right: auto; }
+
+/* Kosi's words while the model is still writing them. */
+.live::after { content: "▍"; color: var(--accent); margin-left: 2px; animation: blink 0.9s steps(2) infinite; }

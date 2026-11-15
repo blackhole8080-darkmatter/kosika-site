@@ -39,22 +39,42 @@ function speakable(text) {
   return text.replace(/```[\s\S]*?```/g, " ").replace(/[*_#`>|]/g, "").replace(/->/g, " gives ").replace(/\s+/g, " ").trim().slice(0, 1200);
 }
 
-let speaking = null;
-export function speak(text, { onEnd = () => {} } = {}) {
-  if (!canSpeak || !text) { onEnd(); return; }
-  stopSpeaking();
+// Utterances still to be said, in order; speechSynthesis plays them one
+// after another.
+let queued = [];
+function say(text, onEnd) {
   const u = new SpeechSynthesisUtterance(speakable(text));
   const v = pickVoice();
   if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-GB";
   u.rate = 1.02;
-  u.onend = u.onerror = () => { if (speaking === u) speaking = null; onEnd(); };
-  speaking = u;
+  u.onend = u.onerror = () => {
+    queued = queued.filter((q) => q !== u);
+    onEnd();
+  };
+  queued.push(u);
   speechSynthesis.speak(u);
 }
 
+export function speak(text, { onEnd = () => {} } = {}) {
+  if (!canSpeak || !text) { onEnd(); return; }
+  stopSpeaking();
+  say(text, onEnd);
+}
+
+// Say more after what is being said now, without cutting it off. With no
+// text, onEnd is called once everything already queued has been said.
+export function speakMore(text, { onEnd = () => {} } = {}) {
+  if (!canSpeak) { onEnd(); return; }
+  if (text && speakable(text)) { say(text, onEnd); return; }
+  const last = queued[queued.length - 1];
+  if (!last) { onEnd(); return; }
+  const before = last.onend;
+  last.onend = last.onerror = (e) => { before(e); onEnd(); };
+}
+
 export function stopSpeaking() {
+  queued = [];
   if (canSpeak) speechSynthesis.cancel();
-  speaking = null;
 }
 
 // Listen for one thing said. onHeard(text, final) is called as words come.
