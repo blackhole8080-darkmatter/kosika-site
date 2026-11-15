@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>An app Kosi made</title>
 <style>
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0b14; color: #e8e6f5; font: 16px/1.5 system-ui, -apple-system, sans-serif; text-align: center; padding: 24px; box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #0b0b14; color: #e8e6f5; font: 16px/1.5 system-ui, -apple-system, sans-serif; }
+  #say { min-height: 100%; display: grid; place-items: center; text-align: center; padding: 24px; box-sizing: border-box; margin: 0; }
   b { color: #f4b740; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+  #keep { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 2; background: #14142a; color: #f2f0ff; border: 1px solid #f4b74066; border-radius: 16px; padding: 14px 44px 14px 16px; font-size: 15px; line-height: 1.4; box-shadow: 0 10px 40px #0008; }
+  #keep button { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: #ffffff1a; color: inherit; font-size: 16px; }
 </style>
 </head>
 <body>
@@ -17,9 +20,14 @@
 <script>
 // An app Kosi made, opened from its link. Everything the app is travels in
 // the link after the #, packed small, so this one page can become any of
-// them, and each one Added to the Home Screen keeps working offline.
+// them, and each one added to the Home Screen keeps working offline.
+//
+// Anyone can make a link like this, so the app never runs as this site: it
+// runs in a sandboxed frame with an origin of its own, where it cannot see
+// Kosika's keys or memories. Its saved data is kept for it here, under its
+// own name, and handed to it when it opens.
 (async () => {
-  const say = (t) => { document.getElementById("say").innerHTML = t; };
+  const say = (html) => { document.getElementById("say").innerHTML = html; };
   const packed = location.hash.slice(1);
   if (!packed) { say("This link has no app in it. Make one with Kosi, then tap <b>Add to Home Screen</b>."); return; }
   let app;
@@ -28,50 +36,80 @@
     const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
     const text = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
     app = JSON.parse(text);
+    if (typeof app.h !== "string") throw new Error("no page");
   } catch (e) {
-    say("This link is broken (" + (e.message || e) + "). Ask Kosi to make the app again.");
+    say("This link is broken. Ask Kosi to make the app again.");
     return;
   }
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
+  const name = String(app.n || app.t || "App").slice(0, 40);
+  const slug = String(app.s || name).replace(/[^a-z0-9]+/gi, "-").slice(0, 40);
+  document.title = String(app.t || name).slice(0, 80);
+  const meta = (n, c) => { const m = document.createElement("meta"); m.name = n; m.content = c; document.head.append(m); };
+  meta("apple-mobile-web-app-title", name);
+
   // The app's icon, as a picture the Home Screen can use.
-  let touchIcon = "";
-  const svgIcon = app.i ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(app.i) : "";
-  if (svgIcon) {
+  if (typeof app.i === "string" && app.i) {
+    const svg = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(app.i);
+    const link = (rel, href, type) => { const l = document.createElement("link"); l.rel = rel; l.href = href; if (type) l.type = type; document.head.append(l); };
+    link("icon", svg, "image/svg+xml");
     try {
       const img = new Image();
-      img.src = svgIcon;
+      img.src = svg;
       await img.decode();
       const c = document.createElement("canvas");
       c.width = c.height = 180;
       c.getContext("2d").drawImage(img, 0, 0, 180, 180);
-      touchIcon = c.toDataURL("image/png");
+      link("apple-touch-icon", c.toDataURL("image/png"));
     } catch (e) {}
   }
 
-  const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
-  const name = (app.n || app.t || "App").replace(/[<>&"]/g, "");
-  const head =
-    `<meta name="apple-mobile-web-app-title" content="${name}">` +
-    (touchIcon ? `<link rel="apple-touch-icon" href="${touchIcon}">` : "") +
-    (svgIcon ? `<link rel="icon" href="${svgIcon}" type="image/svg+xml">` : "");
-  // Shown in Safari only: how to keep this app.
-  const hint = standalone ? "" :
-    `<div id="kosika-keep" style="position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483647;background:#14142a;color:#f2f0ff;border:1px solid #f4b74066;border-radius:16px;padding:14px 44px 14px 16px;font:15px/1.4 system-ui,-apple-system,sans-serif;box-shadow:0 10px 40px #0008">` +
-    `To keep <b style="color:#f4b740">${name}</b> as an app: tap <b>Share</b> <span aria-hidden="true">⬆︎</span>, then <b>Add to Home Screen</b>. It works offline after that.` +
-    `<button onclick="this.parentNode.remove()" aria-label="Close" style="position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:50%;background:#ffffff1a;color:inherit;font-size:16px">✕</button></div>`;
-
+  // The app's own saved data, kept here for it.
+  const KEY = "kosika-made:" + slug;
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
+  // A stand-in for localStorage inside the sandbox: it starts with the app's
+  // data and sends each change out to be kept.
+  const shim = "<script>(function(){var d=" + JSON.stringify(saved).replace(/</g, "\\u003c") + ";" +
+    "function out(){parent.postMessage({kosikaMade:1,data:d},'*')}" +
+    "var s={getItem:function(k){k=String(k);return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null}," +
+    "setItem:function(k,v){d[String(k)]=String(v);out()},removeItem:function(k){delete d[String(k)];out()}," +
+    "clear:function(){d={};out()},key:function(i){return Object.keys(d)[i]||null}};" +
+    "Object.defineProperty(s,'length',{get:function(){return Object.keys(d).length}});" +
+    "try{Object.defineProperty(window,'localStorage',{value:s,configurable:true})}catch(e){}" +
+    // The launcher keeps the app offline; the sandbox may not register its own.
+    "try{Object.defineProperty(navigator,'serviceWorker',{value:{register:function(){return Promise.reject(new Error('kept by the launcher'))}},configurable:true})}catch(e){}})();<\/script>";
   let page = app.h
-    // The app's own manifest and icon file are not beside this page; its
-    // name and icon come with it instead.
     .replace(/<link[^>]+rel="manifest"[^>]*>/gi, "")
-    .replace(/<link[^>]+rel="(apple-touch-icon|icon)"[^>]*>/gi, "")
-    .replace(/<meta[^>]+name="apple-mobile-web-app-title"[^>]*>/gi, "");
-  page = /<\/head>/i.test(page) ? page.replace(/<\/head>/i, head + "</head>") : head + page;
-  page = /<\/body>/i.test(page) ? page.replace(/<\/body>(?![\s\S]*<\/body>)/i, hint + "</body>") : page + hint;
-  document.open();
-  document.write(page);
-  document.close();
+    .replace(/<meta[^>]+name="apple-mobile-web-app-status-bar-style"[^>]*>/gi, "");
+  page = /<head[^>]*>/i.test(page) ? page.replace(/<head[^>]*>/i, (h) => h + shim) : shim + page;
+
+  const frame = document.createElement("iframe");
+  frame.title = name;
+  frame.setAttribute("sandbox", "allow-scripts allow-forms allow-modals allow-popups");
+  frame.srcdoc = page;
+  window.addEventListener("message", (e) => {
+    if (e.source !== frame.contentWindow || !e.data || e.data.kosikaMade !== 1) return;
+    try { localStorage.setItem(KEY, JSON.stringify(e.data.data || {}).slice(0, 2000000)); } catch (err) {}
+  });
+  document.getElementById("say").remove();
+  document.body.append(frame);
+
+  // In Safari only: how to keep this app.
+  const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+  if (!standalone) {
+    const keep = document.createElement("div");
+    keep.id = "keep";
+    const strong = (t) => { const b = document.createElement("b"); b.textContent = t; return b; };
+    const close = document.createElement("button");
+    close.type = "button";
+    close.setAttribute("aria-label", "Close");
+    close.textContent = "✕";
+    close.onclick = () => keep.remove();
+    keep.append("To keep ", strong(name), " as an app: tap ", strong("Share"), ", then ", strong("Add to Home Screen"), ". It works offline after that.", close);
+    document.body.append(keep);
+  }
 })();
 </script>
 </body>
