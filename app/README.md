@@ -43,6 +43,16 @@ Kosika offline. Then:
 
 (Needs kosika PR #8 on `studio`.)
 
+## Apps Kosi makes, on your Home Screen
+
+After **Open as app**, tap **Add to Home Screen**. The whole app is packed
+into one link (`app/made/#…`), so nothing is uploaded anywhere. In Safari the
+app opens on its own page with a note: tap Share, then Add to Home Screen.
+If Kosika itself is on your Home Screen, which has no Share button, the
+link is copied instead: paste it into Safari and add it from there. Each app
+gets its own name and icon, keeps its own data, and works offline once it
+has been opened (app/made/sw.js keeps the page).
+
 ## Answers that arrive as they are written
 
 Kosi's answers appear word by word while the model writes them, from Groq,

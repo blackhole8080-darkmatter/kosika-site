@@ -251,8 +251,45 @@ async function openAsApp(text, result, button) {
   }
   await cache.put(base.href, new Response(made.files.find((f) => f.path === "index.html").text, { headers: { "Content-Type": "text/html; charset=utf-8" } }));
   const frame = el("iframe", { title: made.title, src: base.href });
-  const box = el("div", { class: "full app" }, el("button", { class: "close", type: "button", "aria-label": "Close", text: "✕", onclick: () => box.remove() }), frame);
+  const keep = el("button", { class: "keep", type: "button", text: "Add to Home Screen", onclick: () => keepApp(made, box, keep) });
+  const box = el("div", { class: "full app" }, el("button", { class: "close", type: "button", "aria-label": "Close", text: "✕", onclick: () => box.remove() }), keep, frame);
   document.body.append(box);
+}
+
+// An app Kosi made, packed into one link: made/#<the app, compressed>. The
+// link opens it on its own page, which Safari can add to the Home Screen
+// as an app of its own that works offline.
+async function appLink(made) {
+  const file = (p) => (made.files.find((f) => f.path === p) || {}).text || "";
+  const short = (() => { try { return JSON.parse(file("manifest.webmanifest")).short_name || ""; } catch (e) { return ""; } })();
+  const json = JSON.stringify({ t: made.title, n: short || made.title, s: made.slug, h: file("index.html"), i: file("icon.svg") });
+  const packed = new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  const bytes = new Uint8Array(await new Response(packed).arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return new URL("made/#" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""), location.href).href;
+}
+
+async function keepApp(made, box, button) {
+  const link = await appLink(made);
+  const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+  // In Safari the app opens right here, ready for Share → Add to Home Screen.
+  if (!standalone) { location.href = link; return; }
+  // Kosika on the Home Screen has no Share button of its own, so the link
+  // goes to Safari by way of the clipboard.
+  let copied = false;
+  try { await navigator.clipboard.writeText(link); copied = true; } catch (e) {}
+  $(".keep-how", box)?.remove();
+  const how = el("div", { class: "keep-how" },
+    el("p", { text: copied ? "The app's link is copied." : "Copy the app's link:" }),
+    copied ? null : el("textarea", { readonly: "", rows: 3, text: link }),
+    el("ol", {},
+      el("li", { text: "Open Safari and paste the link in the address bar." }),
+      el("li", { text: "Tap Share, then Add to Home Screen." }),
+      el("li", { text: `${made.title} gets its own icon and works offline.` })),
+    el("button", { class: "ghost small", type: "button", text: "Done", onclick: () => how.remove() }));
+  box.append(how);
+  button.textContent = copied ? "Link copied" : "Add to Home Screen";
 }
 
 // ---------------------------------------------------------------- Kosi: the one door

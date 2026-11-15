@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>An app Kosi made</title>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0b14; color: #e8e6f5; font: 16px/1.5 system-ui, -apple-system, sans-serif; text-align: center; padding: 24px; box-sizing: border-box; }
+  b { color: #f4b740; }
+</style>
+</head>
+<body>
+<p id="say">Opening the app Kosi made…</p>
+<script>
+// An app Kosi made, opened from its link. Everything the app is travels in
+// the link after the #, packed small, so this one page can become any of
+// them, and each one Added to the Home Screen keeps working offline.
+(async () => {
+  const say = (t) => { document.getElementById("say").innerHTML = t; };
+  const packed = location.hash.slice(1);
+  if (!packed) { say("This link has no app in it. Make one with Kosi, then tap <b>Add to Home Screen</b>."); return; }
+  let app;
+  try {
+    const b64 = packed.replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const text = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+    app = JSON.parse(text);
+  } catch (e) {
+    say("This link is broken (" + (e.message || e) + "). Ask Kosi to make the app again.");
+    return;
+  }
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+  // The app's icon, as a picture the Home Screen can use.
+  let touchIcon = "";
+  const svgIcon = app.i ? "data:image/svg+xml;charset=utf-8," + encodeURIComponent(app.i) : "";
+  if (svgIcon) {
+    try {
+      const img = new Image();
+      img.src = svgIcon;
+      await img.decode();
+      const c = document.createElement("canvas");
+      c.width = c.height = 180;
+      c.getContext("2d").drawImage(img, 0, 0, 180, 180);
+      touchIcon = c.toDataURL("image/png");
+    } catch (e) {}
+  }
+
+  const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+  const name = (app.n || app.t || "App").replace(/[<>&"]/g, "");
+  const head =
+    `<meta name="apple-mobile-web-app-title" content="${name}">` +
+    (touchIcon ? `<link rel="apple-touch-icon" href="${touchIcon}">` : "") +
+    (svgIcon ? `<link rel="icon" href="${svgIcon}" type="image/svg+xml">` : "");
+  // Shown in Safari only: how to keep this app.
+  const hint = standalone ? "" :
+    `<div id="kosika-keep" style="position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483647;background:#14142a;color:#f2f0ff;border:1px solid #f4b74066;border-radius:16px;padding:14px 44px 14px 16px;font:15px/1.4 system-ui,-apple-system,sans-serif;box-shadow:0 10px 40px #0008">` +
+    `To keep <b style="color:#f4b740">${name}</b> as an app: tap <b>Share</b> <span aria-hidden="true">⬆︎</span>, then <b>Add to Home Screen</b>. It works offline after that.` +
+    `<button onclick="this.parentNode.remove()" aria-label="Close" style="position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:50%;background:#ffffff1a;color:inherit;font-size:16px">✕</button></div>`;
+
+  let page = app.h
+    // The app's own manifest and icon file are not beside this page; its
+    // name and icon come with it instead.
+    .replace(/<link[^>]+rel="manifest"[^>]*>/gi, "")
+    .replace(/<link[^>]+rel="(apple-touch-icon|icon)"[^>]*>/gi, "")
+    .replace(/<meta[^>]+name="apple-mobile-web-app-title"[^>]*>/gi, "");
+  page = /<\/head>/i.test(page) ? page.replace(/<\/head>/i, head + "</head>") : head + page;
+  page = /<\/body>/i.test(page) ? page.replace(/<\/body>(?![\s\S]*<\/body>)/i, hint + "</body>") : page + hint;
+  document.open();
+  document.write(page);
+  document.close();
+})();
+</script>
+</body>
+</html>

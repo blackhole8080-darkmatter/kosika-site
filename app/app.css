@@ -209,3 +209,10 @@ select, .field input { width: 100%; padding: 9px 10px; border-radius: 10px; bord
 
 /* Kosi's words while the model is still writing them. */
 .live::after { content: "▍"; color: var(--accent); margin-left: 2px; animation: blink 0.9s steps(2) infinite; }
+
+/* Keeping an app Kosi made on the Home Screen. */
+.full.app .keep { position: absolute; top: calc(var(--top) + 8px); left: 60px; z-index: 2; border: 0; height: 40px; padding: 0 16px; border-radius: 20px; background: var(--accent); color: #1a1205; font-weight: 700; box-shadow: 0 6px 20px #0006; }
+.keep-how { position: absolute; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 3; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 12px 40px #0009; }
+.keep-how p { margin: 0 0 8px; font-weight: 700; }
+.keep-how ol { margin: 0 0 12px; padding-left: 20px; }
+.keep-how textarea { width: 100%; box-sizing: border-box; font: 12px var(--mono, monospace); margin-bottom: 8px; }
