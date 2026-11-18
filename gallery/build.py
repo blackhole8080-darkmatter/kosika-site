@@ -53,7 +53,7 @@ SECTIONS = [
         ("m-twin-paradox-birthdays", "Twin paradox", "birthdays on two world lines"),
     ]),
     ("astro", "Astrophysics", "The newest drawings: a black hole, light bending round mass, a spiral galaxy and orbits, from the same white-line library.", [
-        ("a-black-hole", "Black hole", "the disc and its shadow"),
+        ("a-black-hole", "Black hole", "space-time as a funnel (Flamm's paraboloid)"),
         ("a-light-bending", "Light bending", "rays curve round a mass"),
         ("a-galaxy", "Galaxy", "a spiral of stars"),
         ("a-orbits", "Orbits", "ellipses round one focus"),
