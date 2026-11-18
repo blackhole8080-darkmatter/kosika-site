@@ -44,6 +44,8 @@ const programs = {
   explain: { main: "explain.kos", files: { "explain.kos": fs.readFileSync(path.join(designs, "explain.kos"), "utf8") } },
 };
 for (const name of ["study", "coach", "notebook", "router", "ai"]) {
+  // Kosika AI is new: a checkout of kosika-agents without it builds without it.
+  if (name === "ai" && !fs.existsSync(path.join(agents, name))) continue;
   programs[name] = { main: "main.kos", files: kos(path.join(agents, name)), memory: true };
 }
 // A program that declares no model is run without one: the engine refuses

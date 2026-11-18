@@ -2,7 +2,7 @@
 // Every question goes through Kosika programs run by the real engine
 // (kosika.js); this file only shows what they give back.
 
-import { run, warm, whyNot, forgetMemories } from "./kosika.js";
+import { run, warm, whyNot, forgetMemories, loadPrograms } from "./kosika.js";
 import { canListen, canSpeak, listen, stopListening, speak, speakMore, stopSpeaking, voices, voiceSettings } from "./voice.js";
 import { settings, LOCAL_MODELS, hasWebGPU, loadLocal, localDownloaded, forgetLocal, whoAnswers, online } from "./models.js";
 
@@ -539,9 +539,12 @@ const AGENTS = [
 let currentAgent = null;
 
 for (const a of AGENTS) {
-  $("#agent-cards").append(el("button", { class: "agent", type: "button", onclick: () => openAgent(a) },
+  const button = el("button", { class: "agent", type: "button", onclick: () => openAgent(a) },
     el("div", { class: "ai", "data-icon": a.icon }),
-    el("div", {}, el("b", { text: a.name }), el("span", { text: a.about }), el("br"), el("i", { class: "tag" + (a.net ? " net" : ""), text: a.net ? "needs a model" : "works offline" }))));
+    el("div", {}, el("b", { text: a.name }), el("span", { text: a.about }), el("br"), el("i", { class: "tag" + (a.net ? " net" : ""), text: a.net ? "needs a model" : "works offline" })));
+  $("#agent-cards").append(button);
+  // An agent this build does not carry (Kosika AI before kosika-agents has it) is left out.
+  if (a.id === "ai") loadPrograms().then((all) => { if (!all.ai) button.remove(); }, () => {});
 }
 
 function openAgent(a) {
