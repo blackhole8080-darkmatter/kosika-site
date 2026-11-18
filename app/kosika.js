@@ -59,7 +59,7 @@ export async function run(program, workflow, input, { onEvent = () => {}, memory
   const id = nextId++;
   return new Promise((resolve) => {
     runs.set(id, { resolve, onEvent, stream });
-    worker.postMessage({ type: "run", id, job: { program, main: p.main, files: p.files, workflow, input, memory: memory || !!p.memory, models: p.models, maxOutput } });
+    worker.postMessage({ type: "run", id, job: { program, main: p.main, files: p.files, workflow, input, memory: memory || !!p.memory, models: p.models, maxOutput, maxCalls: p.maxCalls } });
   });
 }
 

@@ -346,6 +346,7 @@ async function runOnce(job) {
     "--trace", "/tmp/trace.jsonl"];
   if (job.models !== false) argv.push("--model", "kosika", "--model-url", "https://kosika.model/v1", "--model-timeout", String(job.timeout || 300), "--max-output-tokens", String(job.maxOutput || 8000));
   if (job.memory) argv.push("--memory", KEEP + "/" + job.program);
+  if (job.maxCalls) argv.push("--max-function-calls", String(job.maxCalls));
   out = { stdout: "", stderr: "" };
   const nodesBefore = readFile("/tmp/trace.jsonl");
   if (nodesBefore !== null) nodes.delete("/tmp/trace.jsonl");
