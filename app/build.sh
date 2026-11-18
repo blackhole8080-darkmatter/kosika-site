@@ -19,6 +19,9 @@ AGENTS="${AGENTS:-$here/../../kosika-agents/agents}"
 AGENTS="$(cd "$AGENTS" && pwd)"
 mkdir -p "$here/engine"
 
+# Kosi's face (the living white-line cell) comes from Kosika Designs when it has one; app/kosi-cell.js is the copy kept in git.
+[ -f "$DESIGNS/kosi/kosi-cell.js" ] && cp "$DESIGNS/kosi/kosi-cell.js" "$here/kosi-cell.js"
+
 echo "1/5  the Kosika engine, as WebAssembly"
 (cd "$KOSIKA/native" && GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o "$here/engine/kosika.wasm" .)
 cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" "$here/engine/wasm_exec.js" 2>/dev/null ||
