@@ -35,9 +35,29 @@ what happened without asking a model anything.
 | The run | A real recorded run, replayed by your scroll: the diagram lights up, the timeline scrubs, the clock ticks. |
 | Studio | The window it was recorded in, with a recorded run inside it. |
 | The paper file | The film's second half as a dossier — three stamped exhibits and Kosi, the clerk. |
+| The gallery | A teaser of what Kosika draws, linking to `gallery/`. |
 | Start | Three commands, and the honest FAQ. |
 
 ![The film](shots/site-film.jpg)
+
+## The gallery
+
+**<https://blackhole8080-darkmatter.github.io/kosika-site/gallery/>** shows
+what Kosika draws: Kosi as a living white-line cell you can spin and reshape
+(running live from `app/kosi-cell.js`), the Kosika Brain and two maths
+surfaces running live in 3D (`gallery/live/`, loaded only when you press run),
+and clips and stills of 3D shapes, maths in motion and astrophysics, all from
+`std/designs_plot.kos` in the kosika repo.
+
+The clips were GIFs; they are now small looping MP4s (44 MB of GIFs became
+about 7 MB) that play only while on screen and not at all under reduced
+motion. To add a piece, put it in `gallery/media/` and add a line to
+`gallery/build.py`, then run `python3 gallery/build.py`.
+
+The gallery is outside `app/`, so the phone app and its offline cache are
+unchanged.
+
+![The gallery](shots/gallery-hero.jpg)
 
 ![The run, scrubbed](shots/site-run.jpg)
 

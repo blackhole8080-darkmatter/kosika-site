@@ -57,6 +57,7 @@
     <a href="#what">What it is</a>
     <a href="#run">The run</a>
     <a href="#studio">Studio</a>
+    <a href="gallery/">Gallery</a>
     <a href="designs.html">Designs</a>
     <a href="app/">On your phone</a>
     <a href="#start">Start</a>
@@ -257,6 +258,23 @@
     </div>
   </section>
 
+  <!-- ── the gallery: what Kosika draws ────────────────────────── -->
+  <section class="gx" id="gallery">
+    <div class="wrap">
+      <div class="overline rise">The gallery</div>
+      <h2 class="rise">Drawn by <span class="gx-g">Kosika.</span></h2>
+      <p class="lead rise">Kosika draws its own maths, in white lines and in 3D: knots and minimal surfaces, a Taylor series growing, a black hole bending light, and Kosi, the assistant, as a living cell. The maths comes from its own <b>.kos</b> drawing library, and Kosi from Kosika Designs.</p>
+      <div class="gx-grid rise">
+        <a href="gallery/#kosi" class="gx-t gx-big"><video data-src="gallery/media/kosi-shapes.mp4" poster="gallery/media/kosi-shapes.jpg" muted loop playsinline preload="none" aria-label="Kosi changing shape"></video><span>Kosi, alive</span></a>
+        <a href="gallery/#shapes" class="gx-t"><video data-src="gallery/media/s-gyroid.mp4" poster="gallery/media/s-gyroid.jpg" muted loop playsinline preload="none" aria-label="A turning gyroid"></video><span>Shapes in 3D</span></a>
+        <a href="gallery/#astro" class="gx-t"><video data-src="gallery/media/a-black-hole.mp4" poster="gallery/media/a-black-hole.jpg" muted loop playsinline preload="none" aria-label="A black hole"></video><span>Astrophysics</span></a>
+        <a href="gallery/#motion" class="gx-t"><video data-src="gallery/media/m-taylor-growing.mp4" poster="gallery/media/m-taylor-growing.jpg" muted loop playsinline preload="none" aria-label="A Taylor series growing"></video><span>Maths in motion</span></a>
+        <a href="gallery/#live" class="gx-t"><img src="gallery/media/b-brain-maths-3d-lit.webp" alt="The Kosika Brain in 3D" loading="lazy"><span>The Brain, live in 3D</span></a>
+      </div>
+      <p class="rise"><a class="btn primary" href="gallery/">Open the gallery</a></p>
+    </div>
+  </section>
+
   <!-- ── the paper world ────────────────────────────────────────── -->
   <section class="paper" id="paper">
     <div class="wrap">
@@ -381,10 +399,18 @@
 <footer>
   <div class="fbrand"><img class="mark" src="assets/mark.svg" alt="" style="width:24px;height:24px;border-radius:7px">Kosika</div>
   <div class="fwords">Studio is a file on your computer, not a tab of ours. The site is one page and four files; the film is code.</div>
-  <nav><a href="#film">Film</a><a href="#what">What it is</a><a href="#run">The run</a><a href="#start">Start</a><a href="#top">Top</a></nav>
+  <nav><a href="gallery/">Gallery</a><a href="#film">Film</a><a href="#what">What it is</a><a href="#run">The run</a><a href="#start">Start</a><a href="#top">Top</a></nav>
 </footer>
 
 <canvas class="wipe" id="wipe" aria-hidden="true"></canvas>
 <script src="assets/site.js" defer></script>
+<script>
+// the gallery tiles play only while on screen, and not under reduced motion
+(() => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  const io = new IntersectionObserver(es => es.forEach(e => { const v = e.target; if (e.isIntersecting) { if (!v.src) v.src = v.dataset.src; v.play().catch(() => {}); } else v.pause(); }), { rootMargin: "100px" });
+  document.querySelectorAll(".gx video").forEach(v => io.observe(v));
+})();
+</script>
 </body>
 </html>

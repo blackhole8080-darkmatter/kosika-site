@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kosika Gallery — drawn by Kosika</title>
+<meta name="description" content="Kosi the living cell, the Kosika Brain in 3D, white-line shapes, maths that moves and astrophysics, all drawn by the Kosika language itself.">
+<meta name="theme-color" content="#07071a">
+<meta property="og:title" content="Kosika Gallery — drawn by Kosika">
+<meta property="og:description" content="3D shapes, animated maths, a black hole and Kosi the living cell, every line drawn by Kosika.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://blackhole8080-darkmatter.github.io/kosika-site/gallery/">
+<meta property="og:image" content="https://blackhole8080-darkmatter.github.io/kosika-site/gallery/media/kosi-shapes.jpg">
+<link rel="icon" href="../assets/mark.svg" type="image/svg+xml">
+<link rel="preload" href="../fonts/Figtree.ttf" as="font" type="font/ttf" crossorigin>
+<style>
+@font-face{font-family:"Figtree";src:url("../fonts/Figtree.ttf") format("truetype");font-weight:300 900;font-display:swap}
+:root{
+  --bg:#07071a;--bg2:#0d0c2b;--ink:#f1eee6;--soft:#aab0d0;--faint:#6f75a0;
+  --indigo:#5b5bf0;--violet:#9a8cff;--amber:#f5b13d;--orange:#ff8a4c;--cyan:#5ec8e6;
+  --line:rgba(160,170,255,.14);--card:rgba(20,20,52,.6);
+  --ease:cubic-bezier(.16,1,.3,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+a{color:inherit}
+.sky{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  background:radial-gradient(1200px 700px at 80% -10%,rgba(91,91,240,.28),transparent 60%),
+             radial-gradient(900px 600px at -10% 40%,rgba(245,177,61,.12),transparent 60%),
+             linear-gradient(180deg,var(--bg),var(--bg2) 60%,var(--bg))}
+.sky i{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(90px);opacity:.35;animation:drift 38s ease-in-out infinite alternate}
+.sky i:nth-child(1){background:#3d32c9;left:-20vmax;top:-10vmax}
+.sky i:nth-child(2){background:#b5651d;right:-25vmax;top:55vh;animation-duration:46s;opacity:.18}
+@keyframes drift{to{transform:translate(12vmax,8vmax) scale(1.15)}}
+
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;padding:14px max(16px,4vw);
+  background:rgba(7,7,26,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.home{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none;font-size:17px;white-space:nowrap}
+.home img{width:28px;height:28px}
+header nav{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+header nav::-webkit-scrollbar{display:none}
+header nav a{color:var(--soft);text-decoration:none;font-size:14px;padding:6px 11px;border-radius:99px;white-space:nowrap;transition:background .3s,color .3s}
+header nav a:hover,header nav a.on{color:var(--ink);background:rgba(154,140,255,.16)}
+
+main{max-width:1240px;margin:0 auto;padding:0 max(16px,4vw)}
+.hero{position:relative;display:grid;grid-template-columns:1.05fr 1fr;align-items:center;gap:20px;min-height:min(86vh,820px);padding:30px 0 10px}
+.kick{font:600 12px ui-monospace,"SF Mono",Consolas,monospace;letter-spacing:.28em;text-transform:uppercase;color:var(--amber)}
+h1{font-size:clamp(40px,7vw,88px);line-height:.98;letter-spacing:-.04em;font-weight:850;margin:14px 0 18px}
+h1 .g{background:linear-gradient(100deg,var(--amber),var(--orange) 40%,var(--violet) 75%,var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent;
+  background-size:220% 100%;animation:sheen 9s ease-in-out infinite alternate}
+@keyframes sheen{to{background-position:100% 0}}
+.lede{color:var(--soft);font-size:clamp(16px,1.6vw,19px);max-width:52ch;margin:0 0 24px}
+.stats{display:flex;flex-wrap:wrap;gap:10px 22px;color:var(--faint);font:500 13px ui-monospace,Consolas,monospace}
+.stats b{color:var(--ink);font:800 22px Figtree,sans-serif;display:block}
+.orb{position:relative;aspect-ratio:1;width:100%;max-width:620px;justify-self:center}
+.orb canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y}
+.orb::before{content:"";position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle,rgba(91,91,240,.35),rgba(245,177,61,.08) 55%,transparent 70%);filter:blur(30px);z-index:-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.chips button{font:600 13px Figtree,sans-serif;color:var(--soft);background:rgba(20,20,52,.7);border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;transition:all .3s var(--ease)}
+.chips button:hover{color:var(--ink);border-color:rgba(245,177,61,.5)}
+.chips button[aria-pressed=true]{color:#1a1205;background:var(--amber);border-color:var(--amber)}
+.chips.states button[aria-pressed=true]{background:var(--violet);border-color:var(--violet);color:#0b0a25}
+
+section{padding:70px 0 10px;scroll-margin-top:70px}
+.head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:8px 40px;margin-bottom:26px}
+h2{font-size:clamp(30px,4.4vw,52px);letter-spacing:-.03em;line-height:1;margin:0;font-weight:820}
+h2::after{content:"";display:block;width:64px;height:4px;border-radius:4px;margin-top:14px;background:linear-gradient(90deg,var(--amber),var(--violet))}
+.head p{color:var(--soft);max-width:58ch;margin:0}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.card{position:relative;margin:0;border-radius:18px;overflow:hidden;background:#05050c;border:1px solid var(--line);cursor:zoom-in;
+  transition:transform .6s var(--ease),border-color .4s,box-shadow .6s var(--ease)}
+.card:hover,.card:focus-visible{transform:translateY(-4px);border-color:rgba(245,177,61,.45);box-shadow:0 18px 50px -18px rgba(91,91,240,.55);outline:none}
+.card img,.card video{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#05050c}
+.card figcaption{position:absolute;inset:auto 0 0 0;padding:28px 14px 12px;background:linear-gradient(transparent,rgba(5,5,14,.92));display:flex;flex-direction:column;gap:2px}
+.card figcaption b{font-size:15px}
+.card figcaption span{font-size:12.5px;color:var(--soft)}
+.tag{position:absolute;top:10px;left:10px;font:700 10px ui-monospace,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#1a1205;background:var(--amber);padding:3px 7px;border-radius:6px}
+.wide{grid-column:span 2}
+
+#kosi .grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+#kosi .card.wide{grid-column:span 2;grid-row:span 2}
+
+.lives{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.live{border-radius:20px;overflow:hidden;background:var(--card);border:1px solid var(--line)}
+.live:first-child{grid-column:1/-1}
+.stage{position:relative;aspect-ratio:16/10;background:#05050c}
+.live:first-child .stage{aspect-ratio:16/10}
+.stage img,.stage iframe,.nopic{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0}
+.nopic{background:radial-gradient(circle at 30% 40%,rgba(91,91,240,.45),transparent 50%),radial-gradient(circle at 70% 60%,rgba(245,177,61,.3),transparent 45%),#07071a}
+.play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 15px Figtree,sans-serif;color:#1a1205;background:var(--amber);border:0;border-radius:99px;padding:12px 22px;cursor:pointer;
+  box-shadow:0 0 0 0 rgba(245,177,61,.6);animation:ping 2.6s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 18px rgba(245,177,61,0)}100%{box-shadow:0 0 0 0 rgba(245,177,61,0)}}
+.meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px}
+.meta span{color:var(--soft);font-size:14px}
+.meta a{color:var(--amber);font-size:14px;text-decoration:none;margin-top:4px}
+
+.rise{opacity:0;transform:translateY(26px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.rise.in{opacity:1;transform:none}
+
+.box{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(4,4,14,.9);backdrop-filter:blur(8px);padding:20px}
+.box.open{display:grid}
+.box figure{margin:0;max-width:min(1000px,94vw);max-height:90vh;display:flex;flex-direction:column;gap:10px}
+.box img,.box video{max-width:100%;max-height:80vh;object-fit:contain;border-radius:14px}
+.box figcaption{color:var(--soft)}
+.box figcaption b{color:var(--ink);margin-right:8px}
+.box button{position:absolute;top:16px;right:18px;font:600 15px Figtree,sans-serif;background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);border-radius:99px;padding:8px 16px;cursor:pointer}
+
+.made{margin:80px 0 0;padding:40px 0 60px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:16px 40px;justify-content:space-between;color:var(--soft)}
+.made a{color:var(--amber);text-decoration:none}
+.made code{font:13px ui-monospace,Consolas,monospace;color:var(--ink);background:rgba(154,140,255,.12);padding:2px 6px;border-radius:6px}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;min-height:0;padding-top:16px}
+  .orb{max-width:440px;order:-1}
+  .lives{grid-template-columns:1fr}
+  .live:first-child .stage{aspect-ratio:4/5}
+  .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  #kosi .grid{grid-template-columns:repeat(2,1fr)}
+  .card figcaption{padding:22px 10px 9px}
+  .card figcaption span{display:none}
+  header nav{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .sky i,h1 .g,.play{animation:none}
+  .rise{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><i></i><i></i></div>
+<header>
+  <a class="home" href="../"><img src="../assets/mark.svg" alt="" width="28" height="28">Kosika</a>
+  <nav aria-label="Gallery sections"><a href="#kosi">Kosi</a><a href="#shapes">Shapes in 3D</a><a href="#motion">Maths in motion</a><a href="#astro">Astrophysics</a><a href="#plots">Maths, still</a><a href="../app/">On your phone</a></nav>
+</header>
+<main>
+  <section class="hero" id="kosi-hero">
+    <div>
+      <div class="kick">The Kosika Gallery</div>
+      <h1>Drawn by <span class="g">Kosika.</span></h1>
+      <p class="lede">Every line on this page was drawn by Kosika itself: white lines in 3D, amber for what moves. The maths comes from its own drawing library, Kosi is a living cell from Kosika Designs, and the Brain is the layer that thinks for every agent.</p>
+      <div class="stats"><span><b>57</b>pieces</span><span><b>5</b>live in 3D</span><span><b>0</b>libraries</span></div>
+    </div>
+    <div>
+      <div class="orb"><canvas id="kosi-cv" aria-label="Kosi, a living white-line cell, turning slowly. Drag to spin it." role="img"></canvas></div>
+      <div class="chips" id="shapes" aria-label="Kosi's shape"></div>
+      <div class="chips states" id="states" aria-label="Kosi's mood"></div>
+    </div>
+  </section>
+
+  <section id="kosi"><div class="head rise"><h2>Kosi, alive</h2><p>Kosika&#x27;s assistant is a living cell: 162 cells on a geodesic body, a nucleus inside, amber where a cell fires. It changes shape with what it is talking about.</p></div>
+    <div class="grid"><figure class="card rise wide" tabindex="0"><video data-src="media/kosi-shapes.mp4" poster="media/kosi-shapes.jpg" muted loop playsinline preload="none" aria-label="Seven bodies, one cell"></video><span class="tag">moving</span><figcaption><b>Seven bodies, one cell</b><span>sphere, amoeba, virus, torus, cube, twist, seed</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/k-sphere.webp" alt="Sphere: Kosi at rest" loading="lazy" decoding="async"><figcaption><b>Sphere</b><span>Kosi at rest</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/k-torus.webp" alt="Torus: Kosi talking maths" loading="lazy" decoding="async"><figcaption><b>Torus</b><span>Kosi talking maths</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/k-cube.webp" alt="Cube: Kosi talking code" loading="lazy" decoding="async"><figcaption><b>Cube</b><span>Kosi talking code</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/k-amoeba.webp" alt="Amoeba: Kosi talking about life" loading="lazy" decoding="async"><figcaption><b>Amoeba</b><span>Kosi talking about life</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/k-virus.webp" alt="Spiked: an idea, or a bug" loading="lazy" decoding="async"><figcaption><b>Spiked</b><span>an idea, or a bug</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/k-twist.webp" alt="Twist: time and helices" loading="lazy" decoding="async"><figcaption><b>Twist</b><span>time and helices</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/k-seed.webp" alt="Seed: nature and art" loading="lazy" decoding="async"><figcaption><b>Seed</b><span>nature and art</span></figcaption></figure></div></section>
+  <section id="shapes"><div class="head rise"><h2>Shapes in 3D</h2><p>Parametric bodies, implicit surfaces found by marching tetrahedra, knots as tubes and Platonic solids with their own light. Written in Kosika, drawn as white lines.</p></div><div class="grid"><figure class="card rise" tabindex="0"><video data-src="media/s-gyroid.mp4" poster="media/s-gyroid.jpg" muted loop playsinline preload="none" aria-label="Gyroid"></video><span class="tag">moving</span><figcaption><b>Gyroid</b><span>sin x cos y + sin y cos z + sin z cos x = 0</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/s-klein-bottle.mp4" poster="media/s-klein-bottle.jpg" muted loop playsinline preload="none" aria-label="Klein bottle"></video><span class="tag">moving</span><figcaption><b>Klein bottle</b><span>a surface with no inside</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/s-trefoil.mp4" poster="media/s-trefoil.jpg" muted loop playsinline preload="none" aria-label="Trefoil knot"></video><span class="tag">moving</span><figcaption><b>Trefoil knot</b><span>the simplest true knot, as a tube</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/s-torus.mp4" poster="media/s-torus.jpg" muted loop playsinline preload="none" aria-label="Torus"></video><span class="tag">moving</span><figcaption><b>Torus</b><span>a circle swept round a circle</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/s-dodecahedron.mp4" poster="media/s-dodecahedron.jpg" muted loop playsinline preload="none" aria-label="Dodecahedron"></video><span class="tag">moving</span><figcaption><b>Dodecahedron</b><span>Platonic solid, back faces culled</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/s-wave.mp4" poster="media/s-wave.jpg" muted loop playsinline preload="none" aria-label="Wave"></video><span class="tag">moving</span><figcaption><b>Wave</b><span>a surface that moves</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-schwarz-p.webp" alt="Schwarz P: cos x + cos y + cos z = 0" loading="lazy" decoding="async"><figcaption><b>Schwarz P</b><span>cos x + cos y + cos z = 0</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-seashell.webp" alt="Seashell: a spiral that grows as it turns" loading="lazy" decoding="async"><figcaption><b>Seashell</b><span>a spiral that grows as it turns</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-mobius.webp" alt="Möbius strip: one side, one edge" loading="lazy" decoding="async"><figcaption><b>Möbius strip</b><span>one side, one edge</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-enneper.webp" alt="Enneper surface: a minimal surface" loading="lazy" decoding="async"><figcaption><b>Enneper surface</b><span>a minimal surface</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-dini.webp" alt="Dini&#x27;s surface: a twisted pseudosphere" loading="lazy" decoding="async"><figcaption><b>Dini&#x27;s surface</b><span>a twisted pseudosphere</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-catenoid.webp" alt="Catenoid: a soap film between two rings" loading="lazy" decoding="async"><figcaption><b>Catenoid</b><span>a soap film between two rings</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-figure-eight-knot.webp" alt="Figure-eight knot: four crossings" loading="lazy" decoding="async"><figcaption><b>Figure-eight knot</b><span>four crossings</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-melting-spheres.webp" alt="Melting spheres: implicit spheres blending" loading="lazy" decoding="async"><figcaption><b>Melting spheres</b><span>implicit spheres blending</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-icosahedron.webp" alt="Icosahedron: twenty faces" loading="lazy" decoding="async"><figcaption><b>Icosahedron</b><span>twenty faces</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/s-revolve-sin.webp" alt="Revolved sine: y = sin x turned round its axis" loading="lazy" decoding="async"><figcaption><b>Revolved sine</b><span>y = sin x turned round its axis</span></figcaption></figure></div></section>
+  <section id="live"><div class="head rise"><h2>Live in 3D</h2><p>These are not videos. Press run and the page draws them in your browser, frame by frame.</p></div><div class="lives"><article class="live rise"><div class="stage" data-page="live/brain-3d.html"><img src="media/b-brain-maths-3d-lit.webp" alt="" loading="lazy"><button class="play" type="button" aria-label="Run Kosika Brain in 3D here">▶ Run it live</button></div><div class="meta"><b>Kosika Brain in 3D</b><span>Kosika&#x27;s one intelligence layer, drawn in white lines: sense, recall, think, check, act, learn. Drag to turn it.</span><a href="live/brain-3d.html" target="_blank" rel="noopener">Open full screen ↗</a></div></article><article class="live rise"><div class="stage" data-page="live/brain-map.html"><div class="nopic" aria-hidden="true"></div><button class="play" type="button" aria-label="Run Brain Map here">▶ Run it live</button></div><div class="meta"><b>Brain Map</b><span>How the Brain&#x27;s parts connect, as a live map.</span><a href="live/brain-map.html" target="_blank" rel="noopener">Open full screen ↗</a></div></article><article class="live rise"><div class="stage" data-page="live/mind-view.html"><div class="nopic" aria-hidden="true"></div><button class="play" type="button" aria-label="Run Mind View here">▶ Run it live</button></div><div class="meta"><b>Mind View</b><span>What the Brain is holding in mind, step by step.</span><a href="live/mind-view.html" target="_blank" rel="noopener">Open full screen ↗</a></div></article><article class="live rise"><div class="stage" data-page="live/surface.html"><img src="media/p-surface-ripple.webp" alt="" loading="lazy"><button class="play" type="button" aria-label="Run A live surface here">▶ Run it live</button></div><div class="meta"><b>A live surface</b><span>z = exp(−(x² + y²)) · cos 2(x² + y²), turning in 3D.</span><a href="live/surface.html" target="_blank" rel="noopener">Open full screen ↗</a></div></article><article class="live rise"><div class="stage" data-page="live/spacetime.html"><img src="media/p-spacetime-light-cone.webp" alt="" loading="lazy"><button class="play" type="button" aria-label="Run Space-time, live here">▶ Run it live</button></div><div class="meta"><b>Space-time, live</b><span>The light cone and world lines you can move.</span><a href="live/spacetime.html" target="_blank" rel="noopener">Open full screen ↗</a></div></article></div></section>
+  <section id="motion"><div class="head rise"><h2>Maths in motion</h2><p>Drawings that move the way the idea moves: tangents slide, strips fill an integral, a Taylor series grows term by term.</p></div><div class="grid"><figure class="card rise" tabindex="0"><video data-src="media/m-taylor-growing.mp4" poster="media/m-taylor-growing.jpg" muted loop playsinline preload="none" aria-label="Taylor series, growing"></video><span class="tag">moving</span><figcaption><b>Taylor series, growing</b><span>one more term each beat</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/m-integral-strips.mp4" poster="media/m-integral-strips.jpg" muted loop playsinline preload="none" aria-label="Integral as strips"></video><span class="tag">moving</span><figcaption><b>Integral as strips</b><span>the area fills in</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/m-graph-tangent.mp4" poster="media/m-graph-tangent.jpg" muted loop playsinline preload="none" aria-label="Tangent"></video><span class="tag">moving</span><figcaption><b>Tangent</b><span>the slope rides the curve</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/m-vector-field-stream.mp4" poster="media/m-vector-field-stream.jpg" muted loop playsinline preload="none" aria-label="Vector field"></video><span class="tag">moving</span><figcaption><b>Vector field</b><span>particles follow the arrows</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/m-slope-field-stream.mp4" poster="media/m-slope-field-stream.jpg" muted loop playsinline preload="none" aria-label="Slope field"></video><span class="tag">moving</span><figcaption><b>Slope field</b><span>solutions flow through it</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/m-parametric-trace.mp4" poster="media/m-parametric-trace.jpg" muted loop playsinline preload="none" aria-label="Parametric curve"></video><span class="tag">moving</span><figcaption><b>Parametric curve</b><span>traced by a moving point</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/m-polar-radius.mp4" poster="media/m-polar-radius.jpg" muted loop playsinline preload="none" aria-label="Polar curve"></video><span class="tag">moving</span><figcaption><b>Polar curve</b><span>drawn by its radius</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/m-twin-paradox-birthdays.mp4" poster="media/m-twin-paradox-birthdays.jpg" muted loop playsinline preload="none" aria-label="Twin paradox"></video><span class="tag">moving</span><figcaption><b>Twin paradox</b><span>birthdays on two world lines</span></figcaption></figure></div></section>
+  <section id="astro"><div class="head rise"><h2>Astrophysics</h2><p>The newest drawings: a black hole, light bending round mass, a spiral galaxy and orbits, from the same white-line library.</p></div><div class="grid"><figure class="card rise" tabindex="0"><video data-src="media/a-black-hole.mp4" poster="media/a-black-hole.jpg" muted loop playsinline preload="none" aria-label="Black hole"></video><span class="tag">moving</span><figcaption><b>Black hole</b><span>the disc and its shadow</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/a-light-bending.mp4" poster="media/a-light-bending.jpg" muted loop playsinline preload="none" aria-label="Light bending"></video><span class="tag">moving</span><figcaption><b>Light bending</b><span>rays curve round a mass</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/a-galaxy.mp4" poster="media/a-galaxy.jpg" muted loop playsinline preload="none" aria-label="Galaxy"></video><span class="tag">moving</span><figcaption><b>Galaxy</b><span>a spiral of stars</span></figcaption></figure><figure class="card rise" tabindex="0"><video data-src="media/a-orbits.mp4" poster="media/a-orbits.jpg" muted loop playsinline preload="none" aria-label="Orbits"></video><span class="tag">moving</span><figcaption><b>Orbits</b><span>ellipses round one focus</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/a-sagittarius-a.webp" alt="Sagittarius A*: the black hole at our galaxy&#x27;s centre" loading="lazy" decoding="async"><figcaption><b>Sagittarius A*</b><span>the black hole at our galaxy&#x27;s centre</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/a-orbits-comet.webp" alt="A comet&#x27;s orbit: fast near the Sun, slow far away" loading="lazy" decoding="async"><figcaption><b>A comet&#x27;s orbit</b><span>fast near the Sun, slow far away</span></figcaption></figure></div></section>
+  <section id="plots"><div class="head rise"><h2>Maths, still</h2><p>Complex functions, polar roses, phase portraits and space-time, each a few lines of Kosika.</p></div><div class="grid"><figure class="card rise" tabindex="0"><img src="media/p-complex-modulus-3d.webp" alt="|f(z)| in 3D: a complex function as a landscape" loading="lazy" decoding="async"><figcaption><b>|f(z)| in 3D</b><span>a complex function as a landscape</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-complex-exp.webp" alt="e^z: the complex plane, bent" loading="lazy" decoding="async"><figcaption><b>e^z</b><span>the complex plane, bent</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-complex-z-squared.webp" alt="z²: angles doubled" loading="lazy" decoding="async"><figcaption><b>z²</b><span>angles doubled</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-polar-rose.webp" alt="Polar rose: r = cos kθ" loading="lazy" decoding="async"><figcaption><b>Polar rose</b><span>r = cos kθ</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-polar-cardioid.webp" alt="Cardioid: r = 1 + cos θ" loading="lazy" decoding="async"><figcaption><b>Cardioid</b><span>r = 1 + cos θ</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-parametric-lissajous.webp" alt="Lissajous: two sines, two speeds" loading="lazy" decoding="async"><figcaption><b>Lissajous</b><span>two sines, two speeds</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-pendulum-phase-portrait.webp" alt="Pendulum: its phase portrait" loading="lazy" decoding="async"><figcaption><b>Pendulum</b><span>its phase portrait</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-surface-ripple.webp" alt="Ripple: a surface in 3D" loading="lazy" decoding="async"><figcaption><b>Ripple</b><span>a surface in 3D</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-spacetime-light-cone.webp" alt="Light cone: past, future, elsewhere" loading="lazy" decoding="async"><figcaption><b>Light cone</b><span>past, future, elsewhere</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-spacetime-curved.webp" alt="Curved space-time: mass bends the grid" loading="lazy" decoding="async"><figcaption><b>Curved space-time</b><span>mass bends the grid</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-twin-paradox.webp" alt="Twin paradox: two clocks, two paths" loading="lazy" decoding="async"><figcaption><b>Twin paradox</b><span>two clocks, two paths</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-vector-field-spiral.webp" alt="Spiral field: a vector field" loading="lazy" decoding="async"><figcaption><b>Spiral field</b><span>a vector field</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-taylor-sin.webp" alt="Taylor sin x: polynomials closing in" loading="lazy" decoding="async"><figcaption><b>Taylor sin x</b><span>polynomials closing in</span></figcaption></figure><figure class="card rise" tabindex="0"><img src="media/p-integral-x-squared.webp" alt="∫ x² dx: the area under a parabola" loading="lazy" decoding="async"><figcaption><b>∫ x² dx</b><span>the area under a parabola</span></figcaption></figure></div></section>
+
+  <footer class="made">
+    <div>Made with <a href="https://github.com/blackhole8080-darkmatter/kosika">Kosika</a>. The drawings come from <code>std/designs_plot.kos</code>; Kosi from <a href="https://github.com/blackhole8080-darkmatter/kosika-designs">Kosika Designs</a>.</div>
+    <div><a href="../">← Back to Kosika</a></div>
+  </footer>
+</main>
+
+<div class="box" id="box" role="dialog" aria-modal="true" aria-label="Picture"><button type="button" id="boxclose">Close ✕</button><figure id="boxfig"></figure></div>
+
+<script src="../app/kosi-cell.js"></script>
+<script>
+(() => {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ── Kosi, live in the hero ──
+  const cv = document.getElementById("kosi-cv");
+  if (window.KosiCell && cv) {
+    const kosi = KosiCell.create(cv, { ground: null, floor: true, size: .27, cy: .5 });
+    const shapes = KosiCell.shapes, states = ["idle", "listening", "thinking", "speaking"];
+    let shape = "sphere", state = "idle", picked = false, next = 6, i = 0, t = 0, last = performance.now(), visible = true;
+    const mk = (box, list, cur, on) => list.map(n => { const b = document.createElement("button"); b.type = "button"; b.textContent = n; b.setAttribute("aria-pressed", n === cur); b.onclick = () => on(n); box.append(b); return b; });
+    const sb = mk(document.getElementById("shapes"), shapes, shape, n => { picked = true; setShape(n); });
+    const tb = mk(document.getElementById("states"), states, state, n => { state = n; kosi.setState(n); tb.forEach(b => b.setAttribute("aria-pressed", b.textContent === n)); });
+    function setShape(n) { shape = n; kosi.setShape(n); sb.forEach(b => b.setAttribute("aria-pressed", b.textContent === n)); }
+    const wob = x => Math.sin(x) * .5 + Math.sin(x * 2.31 + 1.3) * .3 + Math.sin(x * 5.17 + .7) * .2;
+    let drag = null;
+    cv.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener("pointermove", e => { if (!drag) return; kosi.spin((e.clientX - drag[0]) * .004, (e.clientY - drag[1]) * .004); drag = [e.clientX, e.clientY]; });
+    cv.addEventListener("pointerup", () => drag = null);
+    new IntersectionObserver(es => visible = es[0].isIntersecting).observe(cv);
+    (function frame(ms) {
+      const dt = Math.min(.05, (ms - last) / 1000); last = ms;
+      if (visible) {
+        t += dt * (reduced ? .35 : 1);
+        if (!picked && !reduced && t > next) { next = t + 6; i = (i + 1) % shapes.length; setShape(shapes[i]); }
+        const b = new Array(16).fill(0); let lv = 0;
+        if (state === "speaking") { lv = Math.min(1, .3 + .8 * Math.max(0, Math.sin(t * 8.5) * .6 + wob(t * 3.1) * .6)); for (let k = 0; k < 16; k++) b[k] = lv * Math.max(0, .45 + .55 * wob(t * (4 + k * .6) + k * 1.9)); }
+        else if (state === "listening") { lv = .3 + .25 * wob(t * 6.3); for (let k = 0; k < 16; k++) b[k] = lv * (.5 + .5 * wob(t * 5 + k)); }
+        kosi.setVoice(lv, b); kosi.draw(t, dt);
+      }
+      requestAnimationFrame(frame);
+    })(last);
+  }
+
+  // ── reveal on scroll ──
+  const rises = document.querySelectorAll(".rise");
+  if (reduced || !("IntersectionObserver" in window)) rises.forEach(r => r.classList.add("in"));
+  else { const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" }); rises.forEach(r => io.observe(r)); }
+
+  // ── clips play only while on screen (and not at all under reduced motion, until tapped) ──
+  const vids = document.querySelectorAll(".card video");
+  const load = v => { if (!v.src) v.src = v.dataset.src; };
+  if (!reduced && "IntersectionObserver" in window) {
+    const vo = new IntersectionObserver(es => es.forEach(e => { const v = e.target; if (e.isIntersecting) { load(v); v.play().catch(() => {}); } else v.pause(); }), { rootMargin: "120px" });
+    vids.forEach(v => vo.observe(v));
+  }
+
+  // ── live pages load only when asked ──
+  document.querySelectorAll(".stage .play").forEach(btn => btn.onclick = () => {
+    const st = btn.parentElement, f = document.createElement("iframe");
+    f.src = st.dataset.page; f.title = btn.getAttribute("aria-label").replace("Run ", ""); f.loading = "lazy";
+    f.allow = "fullscreen"; st.replaceChildren(f);
+    // the Brain page opens with its title; scroll its own page down to the drawing
+    if (st.dataset.page.endsWith("brain-3d.html")) f.onload = () => { try { f.contentWindow.scrollTo(0, 150); } catch (e) {} };
+  });
+
+  // ── the lightbox ──
+  const box = document.getElementById("box"), fig = document.getElementById("boxfig");
+  let back = null;
+  function open(card) {
+    back = card; const v = card.querySelector("video"), im = card.querySelector("img"), cap = card.querySelector("figcaption").cloneNode(true);
+    let m;
+    if (v) { m = document.createElement("video"); m.src = v.dataset.src; m.poster = v.poster; m.muted = true; m.loop = true; m.playsInline = true; m.controls = true; m.autoplay = true; }
+    else { m = document.createElement("img"); m.src = im.src; m.alt = im.alt; }
+    fig.replaceChildren(m, cap); box.classList.add("open"); document.getElementById("boxclose").focus();
+  }
+  function close() { box.classList.remove("open"); fig.replaceChildren(); back && back.focus(); }
+  document.querySelectorAll(".card").forEach(c => { c.onclick = () => open(c); c.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(c); } }; });
+  document.getElementById("boxclose").onclick = close;
+  box.onclick = e => { if (e.target === box) close(); };
+  addEventListener("keydown", e => { if (e.key === "Escape" && box.classList.contains("open")) close(); });
+
+  // ── which section is on screen ──
+  const links = [...document.querySelectorAll("header nav a[href^='#']")];
+  const so = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)); }), { rootMargin: "-45% 0px -50% 0px" });
+  document.querySelectorAll("section[id]").forEach(s => so.observe(s));
+})();
+</script>
+</body>
+</html>

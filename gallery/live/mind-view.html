@@ -1,0 +1,191 @@
+<title>Kosika Mind View</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: white-line brain on a dark stage, a legend of parts beside it, the loop stepping below. Single dark look, by choice. */
+:root{
+  --void:#07061a; --stage:#0d0b26; --line:#2a2668; --ink:#f2f1ff; --mute:#a7a4d4;
+  --sense:#b48cff; --memory:#3fe0c5; --know:#5cc8ff; --think:#ff6fa3; --check:#b6f35c; --act:#ff9a52; --learn:#ffc247; --you:#7b6cff; --curious:#ff5f6d;
+  --display:"Unbounded","Outfit",system-ui,sans-serif; --body:"Outfit",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+body{background:var(--void);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--memory)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,4.4vw,42px);line-height:1.08;margin:6px 0 0;text-wrap:balance}
+.lede{color:var(--mute);max-width:64ch;margin:10px 0 0}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;margin-top:22px;align-items:start}
+@media (max-width:860px){.main{grid-template-columns:1fr}}
+.stage{background:radial-gradient(ellipse at 50% 45%,#1a1550 0%,var(--stage) 55%,var(--void) 100%);border:1px solid var(--line);border-radius:20px;overflow:hidden;min-width:0}
+.stage svg{display:block;width:100%;height:auto}
+.caption{padding:12px 18px 16px;border-top:1px solid var(--line);min-height:84px}
+.caption .step{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.caption .what{font-size:17px;margin-top:3px}
+.parts{display:grid;gap:6px}
+.part{display:grid;grid-template-columns:14px 1fr;gap:10px;align-items:start;padding:9px 12px;border-radius:12px;border:1px solid transparent;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.part:hover,.part:focus-visible{border-color:var(--line);outline:none;background:var(--stage)}
+.part.on{border-color:currentColor;background:var(--stage)}
+.part i{width:12px;height:12px;border-radius:50%;margin-top:5px;background:currentColor;box-shadow:0 0 10px currentColor}
+.part b{display:block;font-weight:600;color:var(--ink)}
+.part span{display:block;font-size:13px;color:var(--mute)}
+.loop{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;font-family:var(--mono);font-size:13px}
+.loop button{background:var(--stage);color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font:inherit;cursor:pointer}
+.loop button.on{color:var(--void);background:var(--ink);border-color:var(--ink)}
+.loop button:focus-visible{outline:2px solid var(--memory);outline-offset:2px}
+.ctrl{margin-left:auto}
+.region{opacity:.07;transition:opacity .5s ease,filter .5s ease}
+.region.on{opacity:.62;filter:url(#glow)}
+.outline{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.fold{fill:none;stroke:var(--ink);stroke-width:1.2;opacity:.42;stroke-linecap:round}
+.fissure{fill:none;stroke:var(--ink);stroke-width:1.8;opacity:.8;stroke-linecap:round}
+.label{font-family:var(--mono);font-size:12px;fill:var(--mute);letter-spacing:.06em;transition:fill .4s}
+.label.on{fill:var(--ink);font-weight:600}
+.spark{fill:var(--ink)}
+@media (prefers-reduced-motion:reduce){.region,.label{transition:none}}
+.note{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.note div{border-left:3px solid var(--line);padding:2px 0 2px 12px;color:var(--mute);font-size:15px}
+.note strong{color:var(--ink)}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Kosika Brain · mind view</div>
+  <h1>Kosika's mind, drawn in white lines</h1>
+  <p class="lede">Each part of Kosika's Brain sits where its job sits in a human brain. As the Brain handles an ask, the working part lights up in its own colour. Tap a part or a step to see it.</p>
+
+  <div class="main">
+    <div class="stage">
+      <svg viewBox="40 40 760 520" role="img" aria-label="Side view of a brain drawn in white lines, with coloured regions for each part of Kosika's Brain">
+        <defs>
+          <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <clipPath id="cerebrum"><path id="cerebrumPath" d="M150 330 C118 250 158 150 262 108 C342 74 452 68 542 94 C632 120 692 180 702 262 C708 320 682 360 642 374 C612 384 582 380 560 372 C522 390 470 400 420 396 C380 392 350 406 320 410 C270 418 230 402 210 382 C182 370 160 356 150 330 Z"/></clipPath>
+        </defs>
+
+        <!-- coloured regions -->
+        <g clip-path="url(#cerebrum)">
+          <polygon class="region" data-part="think" fill="var(--think)" points="90,50 352,50 372,258 262,330 90,420"/>
+          <polygon class="region" data-part="act" fill="var(--act)" points="352,50 438,50 400,300 372,258"/>
+          <polygon class="region" data-part="check" fill="var(--check)" points="438,50 604,50 594,252 452,276 400,300"/>
+          <polygon class="region" data-part="sense" fill="var(--sense)" points="604,50 780,50 780,420 560,420 594,252"/>
+          <polygon class="region" data-part="know" fill="var(--know)" points="262,330 452,276 594,252 560,420 180,440"/>
+        </g>
+        <path class="region" data-part="memory" fill="var(--memory)" d="M392 352 C420 330 470 328 512 340 C530 346 534 362 520 368 C490 360 452 356 418 366 C404 370 386 364 392 352 Z"/>
+        <circle class="region" data-part="you" fill="var(--you)" cx="372" cy="356" r="17"/>
+        <path class="region" data-part="learn" fill="var(--learn)" d="M542 382 C560 444 652 456 694 406 C708 386 692 364 660 372 C620 382 580 386 542 382 Z"/>
+        <ellipse class="region" data-part="curious" fill="var(--curious)" cx="500" cy="420" rx="20" ry="16"/>
+
+        <!-- white lines -->
+        <use href="#cerebrumPath" class="outline"/>
+        <path class="outline" d="M542 382 C560 444 652 456 694 406 C708 386 692 364 660 372"/>
+        <path class="outline" d="M472 398 C482 440 486 482 478 528 M532 392 C522 440 518 482 518 528"/>
+        <path class="fold" d="M478 528 C490 536 508 536 518 528"/>
+        <!-- fissures -->
+        <path class="fissure" d="M262 330 C320 300 390 286 452 276 C510 266 560 258 594 252"/>
+        <path class="fissure" d="M438 74 C430 140 418 210 400 300"/>
+        <path class="fissure" d="M604 112 C600 160 598 210 594 252"/>
+        <!-- gyri -->
+        <path class="fold" d="M200 200 C230 180 260 190 290 170 M180 270 C215 255 240 270 280 248 M240 130 C270 140 300 120 330 128 M300 220 C320 200 340 210 352 190"/>
+        <path class="fold" d="M392 92 C385 150 372 210 360 262"/>
+        <path class="fold" d="M480 110 C500 130 530 120 560 140 M470 190 C500 180 520 200 560 190 M470 240 C500 230 540 236 570 226"/>
+        <path class="fold" d="M630 150 C650 170 670 170 684 200 M620 220 C650 230 670 250 690 270 M612 300 C640 300 660 320 672 340"/>
+        <path class="fold" d="M300 360 C340 350 380 340 420 330 M280 388 C320 380 360 378 400 378"/>
+        <path class="fold" d="M566 400 C600 412 640 414 676 398 M580 420 C610 430 640 430 668 418"/>
+        <!-- spark that travels between working parts -->
+        <circle id="spark" class="spark" r="5" cx="420" cy="230" filter="url(#glow)"/>
+
+        <!-- labels -->
+        <g>
+          <text class="label" data-part="think" x="196" y="236">THINK</text>
+          <text class="label" data-part="act" x="368" y="128" transform="rotate(-80 386 128)">ACT</text>
+          <text class="label" data-part="check" x="476" y="160">CHECK</text>
+          <text class="label" data-part="sense" x="620" y="290">SENSE</text>
+          <text class="label" data-part="know" x="300" y="338">KNOW</text>
+          <text class="label" data-part="memory" x="424" y="392">MEMORY</text>
+          <text class="label" data-part="you" x="318" y="392">YOU</text>
+          <text class="label" data-part="learn" x="598" y="420">LEARN</text>
+          <text class="label" data-part="curious" x="390" y="452">CURIOSITY</text>
+        </g>
+      </svg>
+      <div class="caption" aria-live="polite">
+        <div class="step" id="capStep">Step 1 · sense</div>
+        <div class="what" id="capWhat"></div>
+      </div>
+    </div>
+
+    <div class="parts" id="parts"></div>
+  </div>
+
+  <div class="loop" id="loop" aria-label="Steps of the loop">
+    <button type="button" class="ctrl" id="play" aria-pressed="true">Pause</button>
+  </div>
+
+  <div class="note">
+    <div><strong>Why a brain shape.</strong> Each Kosika job sits where the human brain does that job. Planning is in the front, memory is deep in the temporal lobe, and learning skills is in the cerebellum.</div>
+    <div><strong>Built from Designs.</strong> This is drawn the way the Designs maths drawings are: white lines on dark, colour only where something is happening.</div>
+    <div><strong>Next, live.</strong> Studio and Kosi's orb will light these parts from real runs on the Brain's timeline, not from a script.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const parts = {
+    sense:   {name:"Sense",     where:"visual and sensory cortex", job:"Reads the ask: its words, its kind, which part asked."},
+    memory:  {name:"Memory",    where:"hippocampus",                job:"Recalls the talk so far and past episodes above the floor."},
+    know:    {name:"Knowledge", where:"temporal lobe",              job:"Facts with sources, dates and checked confidence."},
+    think:   {name:"Think",     where:"prefrontal cortex",          job:"Plans with the small local model, and a bigger free one when unsure."},
+    check:   {name:"Check",     where:"parietal lobe",              job:"Proves the answer with code: maths computed, tests run, quotes matched."},
+    act:     {name:"Act",       where:"motor cortex",               job:"Draws with Designs, writes code, speaks through Kosi."},
+    learn:   {name:"Learn",     where:"cerebellum",                 job:"Keeps the episode, learns from Keep and Drop, gated by the scorecard."},
+    you:     {name:"You",       where:"amygdala",                   job:"What it knows about you: style, lines you hold, what you study."},
+    curious: {name:"Curiosity", where:"midbrain",                   job:"In idle time, finds weak spots and asks your yes before changing anything."}
+  };
+  const centers = {sense:[650,250],memory:[460,350],know:[330,320],think:[230,220],check:[510,180],act:[392,170],learn:[620,412],you:[372,356],curious:[500,420]};
+  const steps = [
+    ["sense",  ["sense"],          "Kosi hears “show me how tides work” and sees it wants a picture."],
+    ["recall", ["memory","know","you"], "It recalls a liked tides canvas, two papers on tides, and that you like bold colour."],
+    ["think",  ["think"],          "The small local model plans a moving canvas. It's sure, so the bigger model is not asked."],
+    ["check",  ["check"],          "Code checks the canvas: every label placed, the Moon's pull computed, nothing claimed that was not done."],
+    ["act",    ["act"],            "Designs draws the moving canvas and Kosi speaks one short line over it."],
+    ["learn",  ["learn","curious"],"The episode is kept as passed. Curiosity notes that tide facts are thin and asks to read more."]
+  ];
+  const partsEl = document.getElementById('parts'), loopEl = document.getElementById('loop'), play = document.getElementById('play');
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim();
+  Object.entries(parts).forEach(([k,p])=>{
+    const b=document.createElement('button'); b.type='button'; b.className='part'; b.dataset.part=k; b.style.color=cssVar(k);
+    b.innerHTML='<i></i><div><b>'+p.name+' <small style="color:var(--mute);font-weight:400">· '+p.where+'</small></b><span>'+p.job+'</span></div>';
+    b.addEventListener('click',()=>{stop(); light([k]); cap('Part · '+p.where, p.job, k);});
+    partsEl.appendChild(b);
+  });
+  steps.forEach((s,i)=>{
+    const b=document.createElement('button'); b.type='button'; b.textContent=(i+1)+' '+s[0]; b.dataset.i=i;
+    b.addEventListener('click',()=>{stop(); go(i);});
+    loopEl.insertBefore(b, play);
+  });
+  function light(on){
+    document.querySelectorAll('[data-part]').forEach(el=>el.classList.toggle('on', on.includes(el.dataset.part)));
+  }
+  function cap(step, what, colorPart){
+    const s=document.getElementById('capStep'); s.textContent=step; s.style.color=cssVar(colorPart);
+    document.getElementById('capWhat').textContent=what;
+  }
+  const spark=document.getElementById('spark'); let from=[420,230], anim=null;
+  function moveSpark(to){
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; const start=from.slice(), t0=performance.now();
+    if(anim) cancelAnimationFrame(anim);
+    function f(t){const k=reduce?1:Math.min(1,(t-t0)/700), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      spark.setAttribute('cx',start[0]+(to[0]-start[0])*e); spark.setAttribute('cy',start[1]+(to[1]-start[1])*e);
+      if(k<1) anim=requestAnimationFrame(f); else from=to.slice();}
+    anim=requestAnimationFrame(f);
+  }
+  let i=0, timer=null;
+  function go(n){
+    i=n; const [name,on,what]=steps[n]; light(on); cap('Step '+(n+1)+' · '+name, what, on[0]);
+    loopEl.querySelectorAll('button[data-i]').forEach(b=>b.classList.toggle('on', +b.dataset.i===n));
+    moveSpark(centers[on[0]]);
+  }
+  function start(){ if(timer) return; timer=setInterval(()=>go((i+1)%steps.length),2600); play.textContent='Pause'; play.setAttribute('aria-pressed','true'); }
+  function stop(){ clearInterval(timer); timer=null; play.textContent='Play'; play.setAttribute('aria-pressed','false'); }
+  play.addEventListener('click',()=> timer?stop():start());
+  go(0);
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches) start(); else stop();
+})();
+</script>

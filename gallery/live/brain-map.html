@@ -1,0 +1,179 @@
+<title>Kosika Brain Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Outfit:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one living brain diagram up top, then regions as a grid, the loop, the build steps. Single dark "Dark Matter" look, by choice. */
+:root{
+  --void:#0b0a1f; --deep:#141236; --line:#2c2870; --ink:#ecebff; --mute:#a9a6d6;
+  --indigo:#7b6cff; --amber:#ffb547; --rose:#ff6fa3; --teal:#3fe0c5; --sky:#5cc8ff; --lime:#b6f35c;
+  --display:"Unbounded","Outfit",system-ui,sans-serif; --body:"Outfit",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+body{background:var(--void);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,48px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--amber)}
+h2{font-family:var(--display);font-weight:500;font-size:20px;margin:0 0 14px;text-wrap:balance}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.lede{color:var(--mute);max-width:62ch;margin:12px 0 0;font-size:17px}
+.stage{position:relative;margin:26px 0 8px;border-radius:22px;background:radial-gradient(circle at 50% 46%,#221d63 0%,var(--deep) 45%,var(--void) 80%);border:1px solid var(--line);overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.stage svg{position:relative;display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--mute);margin:10px 0 34px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.dot{width:10px;height:10px;border-radius:50%}
+section{margin-top:40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.region{background:var(--deep);border:1px solid var(--line);border-radius:16px;padding:16px 18px;min-width:0}
+.region h3{margin:0 0 4px;font-family:var(--display);font-weight:500;font-size:15px;display:flex;align-items:center;gap:9px}
+.region p{margin:6px 0 0;color:var(--mute);font-size:15px}
+.tag{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid currentColor;margin-left:auto;white-space:nowrap}
+.has{color:var(--teal)} .grow{color:var(--amber)} .new{color:var(--rose)}
+.loop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--mono);font-size:14px}
+.loop b{background:var(--deep);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-weight:600}
+.loop i{color:var(--amber);font-style:normal}
+.steps{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:start;background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.step .n{font-family:var(--display);font-size:22px;color:var(--amber);line-height:1}
+.step h3{margin:0;font-size:16px;font-weight:600}
+.step p{margin:4px 0 0;color:var(--mute);font-size:15px}
+.step.first{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px;font-size:15px}
+.rules div{border-left:3px solid var(--indigo);padding:4px 0 4px 12px;color:var(--mute)}
+.rules strong{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none!important}}
+.pulse{animation:pulse 3.2s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes pulse{0%,100%{opacity:.85}50%{opacity:1}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Kosika · design for the intelligence layer</div>
+  <h1>One <em>Brain</em> that every Kosika part thinks through</h1>
+  <p class="lede">Today the Brain helps Designs remember, reuse and learn. Next it becomes the shared mind behind Kosika AI, the coder swarm, Kosi's voice orb, Chat and Studio: one memory, one knowledge graph, one way of checking, one place that learns.</p>
+
+  <div class="stage" aria-label="Diagram: the Brain core in the middle, seven regions around it, and the Kosika parts on the outer ring">
+    <canvas id="sparks"></canvas>
+    <svg viewBox="0 0 1000 640" role="img">
+      <defs>
+        <radialGradient id="core" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#ffd58a"/><stop offset=".45" stop-color="#ffb547"/><stop offset="1" stop-color="#7b6cff"/></radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="8"/></filter>
+      </defs>
+      <!-- outer ring: platform parts -->
+      <g font-family="JetBrains Mono, monospace" font-size="15" fill="#a9a6d6" text-anchor="middle">
+        <circle cx="500" cy="320" r="290" fill="none" stroke="#2c2870" stroke-dasharray="3 7"/>
+        <text x="500" y="22">Kosika AI</text>
+        <text x="820" y="150">Coder swarm</text>
+        <text x="850" y="500">Kosi orb · voice</text>
+        <text x="500" y="628">Studio</text>
+        <text x="150" y="500">Designs</text>
+        <text x="175" y="150">Chat · phone</text>
+      </g>
+      <!-- region spokes -->
+      <g stroke-width="2" fill="none" opacity=".75">
+        <line x1="500" y1="320" x2="500" y2="120" stroke="#3fe0c5"/>
+        <line x1="500" y1="320" x2="690" y2="200" stroke="#5cc8ff"/>
+        <line x1="500" y1="320" x2="715" y2="390" stroke="#ff6fa3"/>
+        <line x1="500" y1="320" x2="590" y2="525" stroke="#b6f35c"/>
+        <line x1="500" y1="320" x2="400" y2="525" stroke="#ffb547"/>
+        <line x1="500" y1="320" x2="285" y2="390" stroke="#7b6cff"/>
+        <line x1="500" y1="320" x2="310" y2="200" stroke="#ff8a5c"/>
+      </g>
+      <!-- regions -->
+      <g font-family="Outfit, sans-serif" font-size="16" font-weight="600" text-anchor="middle">
+        <circle cx="500" cy="120" r="44" fill="#0f2f3a" stroke="#3fe0c5" stroke-width="2"/><text x="500" y="116" fill="#ecebff">Memory</text><text x="500" y="136" fill="#3fe0c5" font-size="12" font-weight="400">5 kinds</text>
+        <circle cx="690" cy="200" r="44" fill="#0f2640" stroke="#5cc8ff" stroke-width="2"/><text x="690" y="196" fill="#ecebff">Knowledge</text><text x="690" y="216" fill="#5cc8ff" font-size="12" font-weight="400">facts graph</text>
+        <circle cx="715" cy="390" r="44" fill="#3a1430" stroke="#ff6fa3" stroke-width="2"/><text x="715" y="386" fill="#ecebff">Thinking</text><text x="715" y="406" fill="#ff6fa3" font-size="12" font-weight="400">fast + slow</text>
+        <circle cx="590" cy="525" r="44" fill="#26340f" stroke="#b6f35c" stroke-width="2"/><text x="590" y="521" fill="#ecebff">Checking</text><text x="590" y="541" fill="#b6f35c" font-size="12" font-weight="400">proof, not trust</text>
+        <circle cx="400" cy="525" r="44" fill="#3a2a0c" stroke="#ffb547" stroke-width="2"/><text x="400" y="521" fill="#ecebff">Learning</text><text x="400" y="541" fill="#ffb547" font-size="12" font-weight="400">gated weekly</text>
+        <circle cx="285" cy="390" r="44" fill="#1d1950" stroke="#7b6cff" stroke-width="2"/><text x="285" y="386" fill="#ecebff">You</text><text x="285" y="406" fill="#7b6cff" font-size="12" font-weight="400">Aryan model</text>
+        <circle cx="310" cy="200" r="44" fill="#3a1d10" stroke="#ff8a5c" stroke-width="2"/><text x="310" y="196" fill="#ecebff">Curiosity</text><text x="310" y="216" fill="#ff8a5c" font-size="12" font-weight="400">asks first</text>
+      </g>
+      <!-- core -->
+      <circle cx="500" cy="320" r="78" fill="#ffb547" opacity=".35" filter="url(#glow)" class="pulse"/>
+      <circle cx="500" cy="320" r="66" fill="url(#core)"/>
+      <text x="500" y="314" text-anchor="middle" font-family="Unbounded, sans-serif" font-weight="700" font-size="20" fill="#0b0a1f">BRAIN</text>
+      <text x="500" y="336" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#1d1950">brain_think()</text>
+    </svg>
+  </div>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--amber)"></i>the one core every part calls</span>
+    <span><i class="dot" style="background:var(--teal)"></i>regions inside the Brain</span>
+    <span><i class="dot" style="background:var(--mute)"></i>Kosika parts on the outer ring</span>
+  </div>
+
+  <section>
+    <h2>The seven regions</h2>
+    <div class="grid">
+      <div class="region"><h3><i class="dot" style="background:var(--teal)"></i>Memory <span class="tag grow">grows</span></h3>
+        <p>Today: episode, fact, recipe, structure, recalled by meaning or words above a floor. Adds <b>working memory</b> (this conversation) and an <b>episodic timeline</b> of everything Kosika did, with a short daily summary written each night.</p></div>
+      <div class="region"><h3><i class="dot" style="background:var(--sky)"></i>Knowledge graph <span class="tag new">new</span></h3>
+        <p>Facts as links: <code>Kosika —written in→ Go</code>. Each link keeps its source, date and a confidence that comes from sources and checks, never from a model rating itself. Two facts that disagree are flagged, not merged.</p></div>
+      <div class="region"><h3><i class="dot" style="background:var(--rose)"></i>Thinking, two speeds <span class="tag new">new</span></h3>
+        <p>Fast: code rules and the small local model (qwen3 1.7B on CPU). Slow: a bigger free model, only when fast is unsure. On anything that matters, two models must agree or a third breaks the tie.</p></div>
+      <div class="region"><h3><i class="dot" style="background:var(--lime)"></i>Checking <span class="tag has">has</span></h3>
+        <p>Kosika's own checkers do the exact work: maths computed by std/math, code proven by tests, quotes matched word for word. An answer that fails a check never reaches you as true.</p></div>
+      <div class="region"><h3><i class="dot" style="background:var(--amber)"></i>Learning <span class="tag grow">grows</span></h3>
+        <p>Today: kept canvases, ratings and a small network that learns which drawing fits. Next: learns from every checked run and every Keep or Drop, weekly. A new model or rule replaces the old one only when the scorecard goes up.</p></div>
+      <div class="region"><h3><i class="dot" style="background:var(--indigo)"></i>You <span class="tag new">new</span></h3>
+        <p>What the Brain knows about you: style (Clear in Studio, bold art elsewhere), lines you hold (no paying, yes before writes), what you study. Shown to you, editable by you, never shared.</p></div>
+      <div class="region"><h3><i class="dot" style="background:#ff8a5c"></i>Curiosity <span class="tag grow">grows</span></h3>
+        <p>Today: gathers arXiv papers as facts. Next: in idle time it finds its weak spots (shaky facts, failed asks), reads, and proposes fixes on your phone. Nothing changes until you say yes.</p></div>
+      <div class="region"><h3><i class="dot" style="background:var(--ink)"></i>Mind view <span class="tag new">new</span></h3>
+        <p>A live Designs canvas of this picture: regions light up as the Brain recalls, thinks and checks. The orb glows in the same colours while Kosi speaks.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>One loop for every ask</h2>
+    <div class="loop" aria-label="sense, recall, think, check, act, learn">
+      <b>sense</b><i>→</i><b>recall</b><i>→</i><b>think</b><i>→</i><b>check</b><i>→</i><b>act</b><i>→</i><b>learn</b>
+    </div>
+    <p class="lede" style="font-size:15px">Same loop as today. The change is that it stops living inside Designs and becomes <code>brain_think(ask, part)</code>, so Kosika AI, the swarm, Kosi and Chat share one memory and get smarter together.</p>
+  </section>
+
+  <section>
+    <h2>Build order, one step at a time</h2>
+    <div class="steps">
+      <div class="step first"><div class="n">1</div><div><h3>One core and the timeline</h3><p><code>brain_think</code> in std/brain.kos, working memory and the episodic timeline. Kosika AI is the first part wired through it. Tests in both engines, Go first.</p></div></div>
+      <div class="step"><div class="n">2</div><div><h3>Knowledge graph with sources</h3><p>Facts as links with source, date and checked confidence. arXiv and Wikipedia reads land here. Meaning recall with a small local embedding model (nomic-embed-text, about 270 MB, fine on CPU).</p></div></div>
+      <div class="step"><div class="n">3</div><div><h3>Two speeds and agreement</h3><p>Fast path first, slow free model when unsure, two must agree. Measured on the Kosika AI scorecard (10/20 today).</p></div></div>
+      <div class="step"><div class="n">4</div><div><h3>Nightly summary and weekly learning</h3><p>Episodes become facts and recipes overnight. Weekly, Keep/Drop and checked runs retrain; promotion only when the score goes up.</p></div></div>
+      <div class="step"><div class="n">5</div><div><h3>You, and curiosity</h3><p>The user model you can read and edit, and idle-time proposals sent to your phone for a yes.</p></div></div>
+      <div class="step"><div class="n">6</div><div><h3>Mind view</h3><p>This picture, live, in Studio and behind Kosi's orb.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Lines it holds</h2>
+    <div class="rules">
+      <div><strong>Free models only.</strong> Local Ollama plus free Groq and OpenRouter.</div>
+      <div><strong>Proof over confidence.</strong> A model saying it is sure counts for nothing.</div>
+      <div><strong>Yes before change.</strong> Writes, merges and new models wait for you.</div>
+      <div><strong>Fits the laptop.</strong> Ryzen 5, 16 GB, no GPU. Heavy training goes to free Kaggle GPUs.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const c=document.getElementById('sparks'); if(!c) return;
+  const x=c.getContext('2d'); const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const nodes=[[500,120,'#3fe0c5'],[690,200,'#5cc8ff'],[715,390,'#ff6fa3'],[590,525,'#b6f35c'],[400,525,'#ffb547'],[285,390,'#7b6cff'],[310,200,'#ff8a5c']];
+  let W,H,s; const sparks=[];
+  function size(){const r=c.getBoundingClientRect();W=c.width=r.width*devicePixelRatio;H=c.height=r.height*devicePixelRatio;s=W/1000}
+  size(); addEventListener('resize',size);
+  for(let i=0;i<28;i++) sparks.push({n:i%7,t:Math.random(),v:.004+Math.random()*.006,out:Math.random()<.5});
+  function frame(){
+    x.clearRect(0,0,W,H);
+    for(const p of sparks){
+      p.t+=p.v; if(p.t>1){p.t=0;p.out=!p.out;p.n=(Math.random()*7)|0}
+      const [nx,ny,col]=nodes[p.n]; const k=p.out?p.t:1-p.t;
+      const px=(500+(nx-500)*k)*s, py=(320+(ny-320)*k)*(H/640);
+      x.beginPath(); x.fillStyle=col; x.shadowColor=col; x.shadowBlur=12*devicePixelRatio;
+      x.arc(px,py,3*devicePixelRatio,0,7); x.fill();
+    }
+    if(!reduce) requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
