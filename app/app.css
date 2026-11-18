@@ -155,6 +155,8 @@ select, .field input { width: 100%; padding: 9px 10px; border-radius: 10px; bord
 .art { border-radius: 20px; overflow: hidden; border: 1px solid var(--rule); background: var(--halo); }
 .art svg { display: block; width: 100%; height: auto; }
 .hello .art { max-width: 420px; margin: 4px auto 12px; }
+.art canvas { display: block; width: 100%; aspect-ratio: 16 / 10; }
+.talk-art canvas { display: block; width: 100%; height: 100%; }
 .art.small { margin: 8px 0 4px; }
 .art.small svg { height: 150px; }
 .busy-art .gen-spin { animation-duration: 1.2s !important; }

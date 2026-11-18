@@ -4,6 +4,10 @@
 
 import { run, warm, whyNot, forgetMemories, loadPrograms } from "./kosika.js";
 import { canListen, canSpeak, listen, stopListening, speak, speakMore, stopSpeaking, voices, voiceSettings } from "./voice.js";
+import { kosiFace } from "./kosi-face.js";
+
+// Kosi's two faces (home and talk), made once the page is ready further down.
+let helloFace = null, talkFace = null;
 import { settings, LOCAL_MODELS, hasWebGPU, loadLocal, localDownloaded, forgetLocal, whoAnswers, online } from "./models.js";
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -737,6 +741,7 @@ function setPalette(name, swatches) {
   const s = swatches?.find((x) => x.name === name);
   if (s) document.querySelector('meta[name="theme-color"]').content = s.bg;
   for (const b of document.querySelectorAll(".swatch")) b.classList.toggle("on", b.dataset.name === name);
+  helloFace?.recolour(); talkFace?.recolour();
 }
 
 let look = null;
@@ -747,11 +752,11 @@ async function dress() {
     return;
   }
   $("#sky").innerHTML = look.sky;
-  $("#art-orb") && ($("#art-orb").innerHTML = look.orb);
+  if (!helloFace) $("#art-orb") && ($("#art-orb").innerHTML = look.orb);
   $("#art-bloom").innerHTML = look.bloom;
   $("#art-waves").innerHTML = look.waves;
   $("#art-tree").innerHTML = look.tree;
-  $("#talk-art").innerHTML = look.orb;
+  if (!talkFace) $("#talk-art").innerHTML = look.orb;
   // The small pictures are shown whole, not cropped.
   for (const id of ["#art-bloom", "#art-waves", "#art-tree"]) $(id + " svg")?.setAttribute("preserveAspectRatio", "xMidYMid meet");
   const box = $("#palettes");
@@ -780,11 +785,19 @@ function dressIcons() {
 
 // ---------------------------------------------------------------- talking with Kosi
 
+// Kosi's face is the living white-line cell from Kosika Designs (kosi-cell.js);
+// the old orb picture stays as the fallback if that script did not load.
+helloFace = kosiFace($("#art-orb"), { size: 0.27, cy: 0.5, wander: true });
+talkFace = kosiFace($("#talk-art"), { size: 0.27, cy: 0.5 });
+helloFace?.start();
+
 const talk = {
   box: $("#talk"),
   on: false,
   set(state, words = "") {
     this.box.dataset.state = state;
+    talkFace?.set(state);
+    if (words && state === "speaking") talkFace?.topic(words);
     $("#talk-state").textContent = { idle: "Kosi", listening: "Listening…", thinking: "Thinking…", speaking: "Kosi" }[state] || state;
     $("#talk-go").hidden = state !== "idle";
     if (words) $("#talk-said").textContent = words;
@@ -795,6 +808,7 @@ function openTalk() {
   show("kosi");
   talk.on = true;
   talk.box.hidden = false;
+  talkFace?.start();
   $("#talk-heard").textContent = "";
   $("#talk-said").textContent = canListen ? "" : "This browser cannot listen here. Close this, tap the text box and use the keyboard's microphone; Kosi still answers out loud.";
   talk.set("idle");
@@ -803,6 +817,7 @@ function openTalk() {
 function closeTalk() {
   talk.on = false;
   talk.box.hidden = true;
+  talkFace?.stop();
   stopListening();
   stopSpeaking();
 }
@@ -813,7 +828,7 @@ function talkTurn() {
   talk.set("listening");
   $("#talk-heard").textContent = "";
   listen({
-    onHeard: (t) => { $("#talk-heard").textContent = t; },
+    onHeard: (t) => { $("#talk-heard").textContent = t; talkFace?.heard(); },
     onError: (err) => {
       talk.set("idle", err === "not-allowed" || err === "service-not-allowed"
         ? "Kosika may not use the microphone. Allow it in Settings → Safari → Microphone, or use the keyboard's microphone."

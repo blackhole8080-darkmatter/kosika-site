@@ -10,7 +10,7 @@
 importScripts("build-id.js");
 const CACHE = "kosika-app-" + self.KOSIKA_BUILD;
 const SHELL = [
-  "./", "index.html", "app.css", "app.js", "kosika.js", "models.js", "engine-worker.js", "build-id.js",
+  "./", "index.html", "app.css", "app.js", "kosika.js", "models.js", "engine-worker.js", "build-id.js", "kosi-cell.js", "kosi-face.js",
   "programs.json", "look.json", "look.css", "manifest.webmanifest", "engine/kosika.wasm", "engine/wasm_exec.js", "engine/web-llm.js",
   "icons/mark.svg", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "../fonts/Figtree.ttf",
 ];
