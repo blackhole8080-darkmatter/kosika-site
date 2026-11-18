@@ -43,7 +43,7 @@ const programs = {
   kosi: { main: "kosi.kos", files: kos(path.join(here, "kosi")), memory: true },
   explain: { main: "explain.kos", files: { "explain.kos": fs.readFileSync(path.join(designs, "explain.kos"), "utf8") } },
 };
-for (const name of ["study", "coach", "notebook", "router"]) {
+for (const name of ["study", "coach", "notebook", "router", "ai"]) {
   programs[name] = { main: "main.kos", files: kos(path.join(agents, name)), memory: true };
 }
 // A program that declares no model is run without one: the engine refuses

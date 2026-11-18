@@ -531,6 +531,7 @@ $("#design-form").addEventListener("submit", async (e) => {
 const AGENTS = [
   { id: "study", icon: "book", name: "Study", about: "Answers in plain words from your notes, and Designs draws the picture. Say “remember: …” to keep a note.", net: true, tries: ["remember: Physics 2 exam on 12 December covers waves and optics", "explain how a transistor works", "what is on my physics exam"] },
   { id: "explain", icon: "image", name: "Explainer", about: "Answers a question in a few sentences and draws a whole canvas beside it.", net: true, workflow: "explain", input: (t) => ({ q: { text: t } }), tries: ["how does a rainbow form", "why is the sky blue"] },
+  { id: "ai", icon: "spark", name: "Kosika AI", about: "Plans your ask in small steps. Kosika computes the numbers, runs the code’s tests and has a second model check the words; a step it could not check is marked.", net: true, input: (t) => ({ ask: { text: t, most: 3 } }), tries: ["What is 18% of 2450, and is it more than 400?", "Why are there seasons on Earth?", "Plot y = x^3 - 3x"] },
   { id: "coach", icon: "bolt", name: "Coach", about: "Quizzes you, keeps what you got wrong, asks it again. Reviews need no model.", net: true, tries: ["quiz physics", "review", "score", "help"] },
   { id: "notebook", icon: "file", name: "Notebook", about: "Tell it things, ask later in your own words. No model needed.", net: false, tries: ["remember Rent is 900 euros a month", "what is the rent a month?", "wrong", "right"] },
   { id: "router", icon: "pin", name: "Router", about: "The cheapest way across a small rail network, by A* search. No model needed to plan.", net: false, tries: ["from Ashby to Cove", "fewest stops Birch to Elm", "the network"] },
@@ -569,7 +570,15 @@ async function askAgent(a, text) {
   const c = card(feed, a.name);
   const said = a.id === "notebook" ? text.replace(/^\s*remember\s*:\s*/i, "remember ") : text;
   const done = await narrated(c, a.id, a.workflow || "main", a.input ? a.input(said) : { msg: { text: said } }, `${a.name} works`);
-  if (done.code === 0 && done.result) {
+  if (done.code === 0 && done.result && a.id === "ai") {
+    // Kosika AI's report: the reply, then each step and how Kosika checked it.
+    const r = done.result;
+    c.text.textContent = r.answer || "";
+    for (const svg of r.pictures || []) showDrawing(c, { kind: "drawing", title: "Drawn by Kosika Designs", embed: svg });
+    c.body.append(el("ul", { class: "problems" }, ...(r.steps || []).map((s) => el("li", { text: `${s.ok ? "✓" : "✗ not checked"} · ${s.tool}: ${s.what}. ${s.check}` }))));
+    if (r.note) c.route.hidden = false, (c.route.textContent = r.note);
+    store.put({ id: Date.now() + "-ai", at: Date.now(), q: text, agent: a.name, text: c.text.textContent, drawing: null });
+  } else if (done.code === 0 && done.result) {
     const r = done.result;
     c.text.textContent = r.text ?? r.words ?? "";
     if (r.notes && r.notes.length) c.route.hidden = false, (c.route.textContent = "From your notes: " + r.notes.join(" · "));
